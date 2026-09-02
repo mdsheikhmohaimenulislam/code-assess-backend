@@ -1,0 +1,61 @@
+enum Role {
+    ADMIN
+COMPANY
+CANDIDATE
+}
+
+enum UserStatus {
+    ACTIVE
+INACTIVE
+BLOCKED
+}
+
+enum Difficulty {
+    EASY
+MEDIUM
+HARD
+}
+
+enum AssessmentStatus {
+  DRAFT
+PUBLISHED
+ONGOING
+COMPLETED
+CANCELLED
+}
+
+enum InvitationStatus {
+PENDING
+ACCEPTED
+REJECTED
+EXPIRED
+}
+
+enum AttemptStatus {
+    IN_PROGRESS
+SUBMITTED
+EXPIRED
+}
+
+enum LanguageStatus {
+JAVASCRIPT
+TYPESCRIPT
+PYTHON
+JAVA
+CPP
+}
+enum SubmissionStatus {
+    PENDING
+ACCEPTED
+WRONG_ANSWER
+TIME_LIMIT
+RUNTIME_ERROR
+}
+
+enum PaymentStatus {
+    PENDING
+PAID
+FAILED
+CANCELLED
+REFUNDED
+}
