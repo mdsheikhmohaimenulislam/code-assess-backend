@@ -34,9 +34,9 @@ app.use(cookieParser());
 
 app.get("/test", async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const grantIdTokenResult = await getBkashIdToken();
+		// const grantIdTokenResult = await getBkashIdToken();
 
-		console.log(grantIdTokenResult);
+		// console.log(grantIdTokenResult);
 
 		res.status(httpStatus.OK).json({
 			success: true,
@@ -57,7 +57,7 @@ app.get("/", async (req: Request, res: Response) => {
 	});
 });
 
-app.use(globalErrorHandler);
-app.use(notFound);
+// app.use(globalErrorHandler);
+// app.use(notFound);
 
 export default app;
