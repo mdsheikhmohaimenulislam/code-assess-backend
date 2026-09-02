@@ -1,6 +1,7 @@
 import app from "./app.js";
 import config from "./app/config/index.js";
 import { prisma } from "./app/lib/prisma.js";
+import { redisClient } from "./app/lib/redis.js";
 
 
 
@@ -12,8 +13,8 @@ const main = async () => {
     await prisma.$connect();
     console.log("Connected to the database successfully.");
 
-    // await redisClient.connect();
-    // console.log("Redis Connected Successfully.");
+    await redisClient.connect();
+    console.log("Redis Connected Successfully.");
 
     // await transporter.verify();
     // console.log("Nodemailer connected successfully.");
