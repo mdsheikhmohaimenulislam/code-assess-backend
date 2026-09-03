@@ -1,0 +1,15 @@
+model TestCase {
+  id             String  @id @default(uuid())
+  problemId      String
+  input          String
+  expectedOutput String
+  isHidden       Boolean @default(true)
+
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([problemId])
+  @@map("test_cases")
+}

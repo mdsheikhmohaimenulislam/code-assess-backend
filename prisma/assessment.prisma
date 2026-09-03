@@ -1,0 +1,31 @@
+model Assessment {
+  id           String           @id @default(uuid())
+  title        String
+  description  String?
+  duration     Int
+  startTime    DateTime?
+  endTime      DateTime?
+  totalMarks   Float
+  passingMarks Float
+  status       AssessmentStatus @default(DRAFT)
+
+  companyId String
+  company   CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  problems     AssessmentProblem[]
+  invitations  Invitation[]
+  attempts     Attempt[]
+  payments     Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([createdById])
+  @@index([status])
+  @@index([startTime])
+  @@map("assessments")
+}

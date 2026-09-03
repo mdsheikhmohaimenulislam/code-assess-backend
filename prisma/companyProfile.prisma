@@ -1,0 +1,16 @@
+model CompanyProfile {
+  id          String @id @default(uuid())
+  userId      String @unique
+  companyName String
+  description String?
+  website     String?
+  logo        String?
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessments Assessment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("company_profiles")
+}

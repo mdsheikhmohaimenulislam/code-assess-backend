@@ -1,0 +1,17 @@
+model Evaluation {
+  id              String @id @default(uuid())
+  submissionId    String @unique
+  totalTestCases  Int
+  passedTestCases Int
+  failedTestCases Int
+  score           Float
+  executionTime   Float?
+  memoryUsed      Float?
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("evaluations")
+}

@@ -1,0 +1,19 @@
+model CandidateProfile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  phone       String?
+  bio         String?
+  githubUrl   String?
+  linkedinUrl String?
+  resumeUrl   String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  invitations Invitation[]
+  attempts    Attempt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("candidate_profiles")
+}
