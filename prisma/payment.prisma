@@ -1,13 +1,27 @@
 model Payment {
-id           String        @id @default(uuid())
-userId         String
-assessmentId    String?
-amount          Float
-currency        String        @default("BDT")
-  status          PaymentStatus @default(PENDING)
-  paymentMethod   PaymentMethod @default(STRIPE)
-  transactionId   String?       @unique
-  stripeSessionId String?       @unique
+  id                    String        @id @default(uuid())
+  userId                String
+  assessmentId          String?
+
+  amount                Decimal       @db.Decimal(10, 2)
+  currency              String        @default("BDT")
+
+  status                PaymentStatus @default(UNPAID)
+  paymentMethod         PaymentMethod @default(BKASH)
+
+  merchantInvoiceNumber String        @unique
+  bkashPaymentId        String?       @unique
+  bkashTrxId            String?       @unique
+
+  payerReference        String?
+  paidAt                DateTime?
+
+  gatewayResponse       Json?
+
+  refundTrxId           String?       @unique
+  refundAmount          Decimal?      @db.Decimal(10, 2)
+  refundReason          String?
+  refundedAt            DateTime?
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Restrict)
   assessment Assessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
@@ -18,5 +32,7 @@ currency        String        @default("BDT")
   @@index([userId])
   @@index([assessmentId])
   @@index([status])
+  @@index([bkashPaymentId])
+  @@index([bkashTrxId])
   @@map("payments")
 }
