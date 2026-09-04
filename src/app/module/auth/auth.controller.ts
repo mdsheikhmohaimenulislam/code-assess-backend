@@ -2,16 +2,13 @@ import type { Request, Response } from "express";
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
-import { AppError } from "../../utils/AppError.js";
 import { AuthService } from "./auth.service.js";
 
 
 
-const register= catchAsync(async (req: Request, res: Response) => {
+const register = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
-
-  await AuthService.registerPatient(payload);
-
+  await AuthService.register(payload);
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,

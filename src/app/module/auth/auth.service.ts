@@ -66,19 +66,23 @@ const register = async (payload: IRegisterPayload) => {
     email,
     otp: otpValue,
     expirationMinutes: expirationSeconds / 60,
+    year: new Date().getFullYear(),
   };
 
-  const html = await ejs.renderFile(tempatePath, templateData);
+  try {
+    const html = await ejs.renderFile(tempatePath, templateData);
 
-  console.log(html);
+    await transporter.sendMail({
+      from: config.email_sender,
+      to: email,
+      subject: "Email Verification",
+      html,
+    });
+  } catch (error) {
+    console.error(error);
 
-  await transporter.sendMail({
-    from: config.email_sender,
-    to: email,
-    subject: "Email Verification",
-
-    html,
-  });
+    throw error;
+  }
 };
 
 export const AuthService = {
