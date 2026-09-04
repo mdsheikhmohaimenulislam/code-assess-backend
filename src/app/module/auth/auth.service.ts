@@ -93,101 +93,45 @@ const register = async (payload: IRegisterPayload) => {
 
 const verifyEmail = async (payload: IVerifyEmailPayload) => {
   try {
-    console.log("========== VERIFY EMAIL START ==========");
-
+    // VERIFY EMAIL START
     const otp = payload.otp;
     const email = payload.email.trim().toLowerCase();
-
-    console.log("Email:", email);
-    console.log("OTP received:", otp);
 
     const isUserExist = await prisma.user.findUnique({
       where: { email },
     });
 
-    console.log("Existing user:", isUserExist ? "YES" : "NO");
-
     if (isUserExist?.emailVerified) {
-      throw new AppError(
-        httpStatus.CONFLICT,
-        "Email Already Verified",
-      );
+      throw new AppError(httpStatus.CONFLICT, "Email Already Verified");
     }
 
-    if (
-      isUserExist?.isDeleted ||
-      isUserExist?.status === "DELETED"
-    ) {
-      throw new AppError(
-        httpStatus.GONE,
-        "User is Deleted",
-      );
+    if (isUserExist?.isDeleted || isUserExist?.status === "DELETED") {
+      throw new AppError(httpStatus.GONE, "User is Deleted");
     }
 
     if (isUserExist?.status === "BLOCKED") {
-      throw new AppError(
-        httpStatus.FORBIDDEN,
-        "User is Blocked",
-      );
+      throw new AppError(httpStatus.FORBIDDEN, "User is Blocked");
     }
 
     if (isUserExist?.status === "INACTIVE") {
-      throw new AppError(
-        httpStatus.FORBIDDEN,
-        "User is Inactive",
-      );
+      throw new AppError(httpStatus.FORBIDDEN, "User is Inactive");
     }
 
-    // =========================
     // OTP
-    // =========================
-
     const otpKey = `User-registration-otp:${email}`;
-
-    console.log("OTP Redis Key:", otpKey);
-
     const redisOtp = await redisClient.get(otpKey);
 
-    console.log(
-      "Redis OTP exists:",
-      redisOtp ? "YES" : "NO",
-    );
-
     if (!redisOtp) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Invalid or Expired OTP",
-      );
+      throw new AppError(httpStatus.BAD_REQUEST, "Invalid or Expired OTP");
     }
 
     if (redisOtp !== otp) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "OTP Does Not Match",
-      );
+      throw new AppError(httpStatus.BAD_REQUEST, "OTP Does Not Match");
     }
 
-    console.log("OTP matched successfully");
-
-    // =========================
     // Registration Data
-    // =========================
-
-    const registrationKey =
-      `User-registration-data:${email}`;
-
-    console.log(
-      "Registration Redis Key:",
-      registrationKey,
-    );
-
-    const redisUserData =
-      await redisClient.get(registrationKey);
-
-    console.log(
-      "Registration data exists:",
-      redisUserData ? "YES" : "NO",
-    );
+    const registrationKey = `User-registration-data:${email}`;
+    const redisUserData = await redisClient.get(registrationKey);
 
     if (!redisUserData) {
       throw new AppError(
@@ -196,14 +140,9 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
       );
     }
 
-    const userPayload: IRegisterPayload =
-      JSON.parse(redisUserData);
+    const userPayload: IRegisterPayload = JSON.parse(redisUserData);
 
-    console.log("Registration data loaded");
-
-    // =========================
     // Create User
-    // =========================
 
     const createdUser = await prisma.user.create({
       data: {
@@ -220,39 +159,22 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
       },
     });
 
-    console.log("User created:", createdUser.id);
-
-    // =========================
     // Delete Redis
-    // =========================
-
     await redisClient.del(otpKey);
     await redisClient.del(registrationKey);
 
-    console.log("Redis data deleted");
-
-    // =========================
     // Welcome Email
-    // =========================
-
     const templatePath = path.join(
       process.cwd(),
       "src/app/templates/user-welcome-email.ejs",
     );
-
-    console.log("Template path:", templatePath);
 
     const templateData = {
       name: createdUser.name,
       year: new Date().getFullYear(),
     };
 
-    const html = await ejs.renderFile(
-      templatePath,
-      templateData,
-    );
-
-    console.log("EJS rendered successfully");
+    const html = await ejs.renderFile(templatePath, templateData);
 
     await transporter.sendMail({
       from: config.email_sender,
@@ -261,12 +183,7 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
       html,
     });
 
-    console.log("Welcome email sent");
-
-    // =========================
     // JWT
-    // =========================
-
     const jwtPayload = {
       userId: createdUser.id,
       name: createdUser.name,
@@ -286,18 +203,13 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
       config.jwt_refresh_expires_in as SignOptions,
     );
 
-    console.log("JWT created successfully");
-    console.log("========== VERIFY EMAIL END ==========");
-
     return {
       user: createdUser,
       accessToken,
       refreshToken,
     };
   } catch (error) {
-    console.error("========== VERIFY EMAIL ERROR ==========");
     console.error(error);
-    console.error("========================================");
 
     throw error;
   }
