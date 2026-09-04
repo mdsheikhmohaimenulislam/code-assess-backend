@@ -8,8 +8,13 @@ model User {
   status        UserStatus @default(ACTIVE)
   emailVerified Boolean    @default(false)
 
+  imageUrl String? @default("")
+
   companyProfile   CompanyProfile?
   candidateProfile CandidateProfile?
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 
   assessmentsCreated Assessment[]
   problemsCreated    Problem[]

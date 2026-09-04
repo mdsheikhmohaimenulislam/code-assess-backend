@@ -9,15 +9,16 @@ const router = Router();
 
 router.post(
   "/register",
-  
+
   validateRequest(UserValidation.RegistrationZodSchema),
   AuthController.register
 );
 
-// router.post(
-//   "/verify-email",
-//   validateRequest(UserValidation.EmailVerifyZodSchema),
-// );
+router.post(
+  "/verify-email",
+  validateRequest(UserValidation.EmailVerifyZodSchema),
+  AuthController.verifyEmail
+);
 
 // router.post("/login", validateRequest(UserValidation.LoginZodSchema));
 // router.get(

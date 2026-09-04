@@ -8,6 +8,7 @@ enum UserStatus {
   ACTIVE
   INACTIVE
   BLOCKED
+  DELETED
 }
 
 enum Difficulty {
