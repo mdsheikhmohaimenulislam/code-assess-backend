@@ -1,6 +1,5 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
-
 import express, {
 	type Application,
 	type NextFunction,
@@ -9,9 +8,9 @@ import express, {
 } from "express";
 import httpStatus from "http-status";
 import config from "./app/config/index.js";
-
-
-
+import { AuthRoutes } from "./app/module/auth/auth.route.js";
+import { globalErrorHandler } from "./app/middlewares/globalErrorHandler.js";
+import { notFound } from "./app/middlewares/notFound.js";
 
 
 const app: Application = express();
@@ -30,24 +29,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
+app.use("/api/v1/auth", AuthRoutes);
 
 
-app.get("/test", async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		// const grantIdTokenResult = await getBkashIdToken();
 
-		// console.log(grantIdTokenResult);
-
-		res.status(httpStatus.OK).json({
-			success: true,
-			message: "Welcome to PH Healthcare System Backend",
-			data: null,
-		});
-	} catch (error) {
-		console.log(error);
-		next(error);
-	}
-});
 
 // Basic route...
 app.get("/", async (req: Request, res: Response) => {
@@ -57,7 +42,7 @@ app.get("/", async (req: Request, res: Response) => {
 	});
 });
 
-// app.use(globalErrorHandler);
-// app.use(notFound);
+app.use(globalErrorHandler);
+app.use(notFound);
 
 export default app;

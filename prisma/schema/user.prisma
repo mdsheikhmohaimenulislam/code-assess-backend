@@ -1,12 +1,12 @@
 model User {
-  id             String     @id @default(uuid())
-  name           String
-  email          String     @unique
-  password       String?
-  googleId       String?    @unique
-  role           Role       @default(CANDIDATE)
-  status         UserStatus @default(ACTIVE)
-  emailVerified  Boolean    @default(false)
+  id            String     @id @default(uuid())
+  name          String
+  email         String     @unique
+  password      String?
+  googleId      String?    @unique
+  role          Role       @default(CANDIDATE)
+  status        UserStatus @default(ACTIVE)
+  emailVerified Boolean    @default(false)
 
   companyProfile   CompanyProfile?
   candidateProfile CandidateProfile?

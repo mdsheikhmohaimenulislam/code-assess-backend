@@ -1,12 +1,12 @@
 model Submission {
-  id          String             @id @default(uuid())
+  id          String              @id @default(uuid())
   attemptId   String
   problemId   String
   code        String
   language    ProgrammingLanguage
   status      SubmissionStatus    @default(PENDING)
-  score       Float              @default(0)
-  submittedAt DateTime           @default(now())
+  score       Float               @default(0)
+  submittedAt DateTime            @default(now())
 
   attempt Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   problem Problem @relation(fields: [problemId], references: [id], onDelete: Restrict)

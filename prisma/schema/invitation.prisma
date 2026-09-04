@@ -2,7 +2,7 @@ model Invitation {
   id           String           @id @default(uuid())
   assessmentId String
   candidateId  String
-    userId      String  @unique
+  userId       String           @unique
   email        String
   status       InvitationStatus @default(PENDING)
   expiresAt    DateTime?
@@ -10,7 +10,7 @@ model Invitation {
   assessment Assessment       @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
   candidate  CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
-user User @relation(fields: [userId],references: [id],onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

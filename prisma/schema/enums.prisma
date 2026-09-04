@@ -1,49 +1,50 @@
 enum Role {
-    ADMIN
-COMPANY
-CANDIDATE
+  ADMIN
+  COMPANY
+  CANDIDATE
 }
 
 enum UserStatus {
-    ACTIVE
-INACTIVE
-BLOCKED
+  ACTIVE
+  INACTIVE
+  BLOCKED
 }
 
 enum Difficulty {
-    EASY
-MEDIUM
-HARD
+  EASY
+  MEDIUM
+  HARD
 }
 
 enum AssessmentStatus {
   DRAFT
-PUBLISHED
-ONGOING
-COMPLETED
-CANCELLED
+  PUBLISHED
+  ONGOING
+  COMPLETED
+  CANCELLED
 }
 
 enum InvitationStatus {
-PENDING
-ACCEPTED
-REJECTED
-EXPIRED
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
 }
 
 enum AttemptStatus {
-    IN_PROGRESS
-SUBMITTED
-EXPIRED
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
 }
 
 enum ProgrammingLanguage {
-JAVASCRIPT
-TYPESCRIPT
-PYTHON
-JAVA
-CPP
+  JAVASCRIPT
+  TYPESCRIPT
+  PYTHON
+  JAVA
+  CPP
 }
+
 enum SubmissionStatus {
   PENDING
   ACCEPTED
@@ -64,5 +65,5 @@ enum PaymentStatus {
 
 enum PaymentMethod {
   STRIPE
-   BKASH
+  BKASH
 }

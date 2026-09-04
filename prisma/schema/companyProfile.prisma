@@ -1,6 +1,6 @@
 model CompanyProfile {
-  id          String @id @default(uuid())
-  userId      String @unique
+  id          String  @id @default(uuid())
+  userId      String  @unique
   companyName String
   description String?
   website     String?

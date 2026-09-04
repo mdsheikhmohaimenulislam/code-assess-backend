@@ -1,5 +1,6 @@
 import app from "./app.js";
 import config from "./app/config/index.js";
+import { transporter } from "./app/lib/nodemailer.js";
 import { prisma } from "./app/lib/prisma.js";
 import { redisClient } from "./app/lib/redis.js";
 
@@ -16,8 +17,8 @@ const main = async () => {
     await redisClient.connect();
     console.log("Redis Connected Successfully.");
 
-    // await transporter.verify();
-    // console.log("Nodemailer connected successfully.");
+    await transporter.verify();
+    console.log("Nodemailer connected successfully.");
 
     // await seedSuperAdmin();
     // await seedTesterAdmin();
