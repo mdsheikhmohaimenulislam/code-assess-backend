@@ -1,7 +1,11 @@
 import type { Prisma } from "../../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
-import type { IGetAllUsersQuery, IUpdatedProfile, IUserUpdatedProfile } from "./user.interface.js";
+import type {
+  IGetAllUsersQuery,
+  IUpdatedProfile,
+  IUserUpdatedProfile,
+} from "./user.interface.js";
 
 const getSingleUser = async (id: string) => {
   const user = await prisma.user.findFirst({
@@ -158,8 +162,6 @@ const updateMyProfile = async (userId: string, payload: IUpdatedProfile) => {
   return updatedUser;
 };
 
-
-
 const updateUserStatus = async (
   userId: string,
   payload: IUserUpdatedProfile,
@@ -216,11 +218,59 @@ const updateUserStatus = async (
   return updatedUser;
 };
 
+const deleteUser = async (userId: string) => {
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      id: userId,
+      isDeleted: false,
+      deletedAt: null,
+    },
+  });
+
+  if (!existingUser) {
+    throw new AppError(404, "User not found");
+  }
+
+  await prisma.user.update({
+    where: {
+      id: userId,
+    },
+
+    data: {
+      isDeleted: true,
+      deletedAt: new Date(),
+      status: "DELETED",
+    },
+  });
+
+  return null;
+};
+
+const permanentlyDeleteUser = async (userId: string) => {
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (!existingUser) {
+    throw new AppError(404, "User not found");
+  }
+
+  await prisma.user.delete({
+    where: {
+      id: userId,
+    },
+  });
+
+  return null;
+};
+
 export const UserService = {
   getAllUsers,
-
+  permanentlyDeleteUser,
   updateMyProfile,
   getSingleUser,
-    updateUserStatus,
-  //   deleteUser,
+  updateUserStatus,
+  deleteUser,
 };

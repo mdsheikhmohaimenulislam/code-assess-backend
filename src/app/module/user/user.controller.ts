@@ -3,6 +3,7 @@ import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import httpStatus from "http-status";
 import { UserService } from "./user.service.js";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
 const getSingleUser = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
@@ -54,25 +55,37 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const deleteUser = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const { id } = req.params;
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-//     const result = await UserService.deleteUser(id);
+  await UserService.deleteUser(id as string);
 
-//     res.status(200).json({
-//       success: true,
-//       message: "User deleted successfully",
-//       data: result,
-//     });
-//   },
-// );
+  res.status(200).json({
+    success: true,
+    message: "User deleted successfully",
+    data: null,
+  });
+});
+
+const permanentlyDeleteUser = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    await UserService.permanentlyDeleteUser(id as string);
+
+    res.status(200).json({
+      success: true,
+      message: "User permanently deleted successfully",
+      data: null,
+    });
+  },
+);
 
 export const UserController = {
   getAllUsers,
-  //   getMyProfile,
+  permanentlyDeleteUser,
   updateMyProfile,
   getSingleUser,
   updateUserStatus,
-  //   deleteUser,
+  deleteUser,
 };

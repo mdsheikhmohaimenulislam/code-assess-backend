@@ -34,17 +34,12 @@ route.patch(
   UserController.updateUserStatus,
 );
 
-route.patch(
-  "/:id/role",
+route.delete(
+  "/me/:id",
   auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),
-  //   validateRequest(updateUserRoleSchema),
-  //   UserController.updateUserRole,
+  UserController.deleteUser,
 );
 
-route.delete(
-  "/:id",
-  auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),
-  //   UserController.deleteUser,
-);
+route.delete("/:id", auth(Role.ADMIN), UserController.permanentlyDeleteUser);
 
 export const userRoute = route;
