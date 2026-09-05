@@ -3,15 +3,27 @@ import { auth } from "../../middlewares/checkAuth.js";
 import { Role } from "../../../generated/prisma/enums.js";
 import { UserController } from "./user.controller.js";
 
-
 const route = Router();
 
 route.get(
   "/:id",
   auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),
-
   UserController.getSingleUser,
 );
+
+
+route.get(
+  "/",
+  auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),
+
+  UserController.getAllUsers,
+);
+
+
+
+
+
+
 
 route.patch(
   "/me",
@@ -20,18 +32,8 @@ route.patch(
   //   UserController.updateMyProfile,
 );
 
-/*
-|--------------------------------------------------------------------------
-| Admin User Management
-|--------------------------------------------------------------------------
-*/
 
-route.get(
-  "/",
-  auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),
 
-  //   UserController.getAllUsers,
-);
 
 route.patch(
   "/:id/status",

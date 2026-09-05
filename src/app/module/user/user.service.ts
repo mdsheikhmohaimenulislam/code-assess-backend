@@ -1,6 +1,7 @@
 import type { Prisma } from "../../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
+import type { IGetAllUsersQuery } from "./user.interface.js";
 
 
 const getSingleUser = async (id: string) => {
@@ -31,8 +32,99 @@ const getSingleUser = async (id: string) => {
   return user;
 };
 
+
+
+const getAllUsers = async (query: IGetAllUsersQuery) => {
+  const page = Math.max(Number(query.page) || 1, 1);
+
+  const limit = Math.min(
+    Math.max(Number(query.limit) || 10, 1),
+    100,
+  );
+
+  const skip = (page - 1) * limit;
+
+  const search = query.search?.trim();
+
+  const where: Prisma.UserWhereInput = {
+    isDeleted: false,
+    deletedAt: null,
+  };
+
+  // Search by name or email
+  if (search) {
+    where.OR = [
+      {
+        name: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        email: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+    ];
+  }
+
+  // Filter by role
+  if (query.role) {
+    where.role = query.role;
+  }
+
+  // Filter by status
+  if (query.status) {
+    where.status = query.status;
+  }
+
+  const sortBy = query.sortBy || "createdAt";
+  const sortOrder = query.sortOrder || "desc";
+
+  const [users, total] = await prisma.$transaction([
+    prisma.user.findMany({
+      where,
+      skip,
+      take: limit,
+
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
+
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        authProvider: true,
+        status: true,
+        emailVerified: true,
+        imageUrl: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+
+    prisma.user.count({
+      where,
+    }),
+  ]);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: users,
+  };
+};
+
+
 export const UserService = {
-  //   getAllUsers,
+    getAllUsers,
   //   getMyProfile,
   //   updateMyProfile,
   getSingleUser,

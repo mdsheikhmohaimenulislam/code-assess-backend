@@ -6,6 +6,6 @@ export interface IGetAllUsersQuery {
   search?: string;
   role?: Role;
   status?: UserStatus
-  sortBy?: "createdAt" | "name" | "email";
+  sortBy?: "createdAt"
   sortOrder?: "asc" | "desc";
 }
