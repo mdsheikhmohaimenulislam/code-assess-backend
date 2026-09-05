@@ -33,10 +33,10 @@ router.get(
   AuthController.getMe,
 );
 
-// google login
+//? google login
 
-// router.post("/refresh-token");
-// router.post("/google");
+router.post("/refresh-token", AuthController.refreshToken);
+router.post("/google", AuthController.googleLogin);
 
 // router.post(
 //   "/forgot-password",

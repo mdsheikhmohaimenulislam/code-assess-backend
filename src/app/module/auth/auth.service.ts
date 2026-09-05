@@ -3,6 +3,7 @@ import crypto from "crypto";
 import ejs from "ejs";
 import { AppError } from "../../utils/AppError.js";
 import type {
+  IGoogleLoginPayload,
   ILoginUserPayload,
   IRegisterPayload,
   IRequestUser,
@@ -14,9 +15,12 @@ import { redisClient } from "../../lib/redis.js";
 import path from "path";
 import { transporter } from "../../lib/nodemailer.js";
 import config from "../../config/index.js";
-import { Role, UserStatus } from "../../../generated/prisma/enums.js";
+import { AuthProvider, Role, UserStatus } from "../../../generated/prisma/enums.js";
 import { jwtUtils } from "../../utils/jwt.js";
-import type { SignOptions } from "jsonwebtoken";
+import type { JwtPayload, SignOptions } from "jsonwebtoken";
+import type { TokenPayload } from "google-auth-library";
+import { googleClient } from "../../lib/googleAuth.js";
+
 
 const register = async (payload: IRegisterPayload) => {
   const { name, password } = payload;
@@ -308,9 +312,209 @@ const getMe = async (user: IRequestUser) => {
   return isUserExists;
 };
 
+const refreshToken = async (token: string) => {
+  const verifiedRefreshToken = jwtUtils.verifyToken(
+    token,
+    config.jwt_refresh_secret,
+  );
+
+  if (!verifiedRefreshToken.success || !verifiedRefreshToken.data) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      config.node_env === "development"
+        ? verifiedRefreshToken.error
+        : "Invalid refresh token",
+    );
+  }
+
+  const data = verifiedRefreshToken.data as JwtPayload;
+
+  const user = await prisma.user.findUnique({
+    where: { id: data.userId },
+  });
+
+  if (!user || user.isDeleted || user.status !== UserStatus.ACTIVE) {
+    throw new AppError(httpStatus.NOT_FOUND, "User is inactive or not found");
+  }
+
+  const jwtPayload = {
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in as SignOptions,
+  );
+
+  const refreshToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_refresh_secret,
+    config.jwt_refresh_expires_in as SignOptions,
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
+
+const googleLogin = async (payload: IGoogleLoginPayload) => {
+  let googleIdTokenPayload: TokenPayload | null | undefined = null;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: payload.idToken,
+      audience: config.google_client_id,
+    });
+
+    googleIdTokenPayload = ticket.getPayload();
+  } catch (error) {
+    console.log("Google ID Token Verification Failed", error);
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Invalid Or Expired Google Id Token",
+    );
+  }
+
+  if (!googleIdTokenPayload) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Invalid Or Expired Google Id Token",
+    );
+  }
+
+  if (!googleIdTokenPayload.email) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Google Email Not Found");
+  }
+  if (!googleIdTokenPayload.name) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Google Email User Name Not Found",
+    );
+  }
+
+  const ifUserExistWithGoogleAuth = await prisma.user.findFirst({
+    where: {
+      email: googleIdTokenPayload.email,
+      role: Role.CANDIDATE,
+      googleId: googleIdTokenPayload.sub,
+    },
+  });
+
+  let user = ifUserExistWithGoogleAuth;
+
+  if (!ifUserExistWithGoogleAuth) {
+    const ifUserExistWithCredentials = await prisma.user.findFirst({
+      where: {
+        email: googleIdTokenPayload.email,
+        role: Role.CANDIDATE,
+        authProvider: AuthProvider.CREDENTIAL,
+      },
+    });
+
+    if (ifUserExistWithCredentials) {
+      if (!ifUserExistWithCredentials.emailVerified) {
+        throw new AppError(httpStatus.FORBIDDEN, "Email Not Verified");
+      }
+
+      if (ifUserExistWithCredentials.status === UserStatus.BLOCKED) {
+        throw new AppError(httpStatus.FORBIDDEN, "User Is Blocked");
+      }
+
+      if (
+        ifUserExistWithCredentials.isDeleted ||
+        ifUserExistWithCredentials.status === UserStatus.DELETED
+      ) {
+        throw new AppError(httpStatus.GONE, "User Is Deleted");
+      }
+
+      user = await prisma.user.update({
+        where: {
+          id: ifUserExistWithCredentials.id,
+        },
+
+        data: {
+          googleId: googleIdTokenPayload.sub,
+        },
+      });
+    } else {
+      // Google Register
+      user = await prisma.user.create({
+        data: {
+          name: googleIdTokenPayload.name,
+          email: googleIdTokenPayload.email,
+          role: Role.CANDIDATE,
+          googleId: googleIdTokenPayload.sub,
+          authProvider: AuthProvider.GOOGLE,
+          emailVerified: true,
+        },
+      });
+
+      const tempatePath = path.join(
+        process.cwd(),
+        "src/app/templates/candidate-welcome-email.ejs",
+      );
+
+      const templateData = {
+        name: user.name,
+      };
+
+      const html = await ejs.renderFile(tempatePath, templateData);
+
+      await transporter.sendMail({
+        from: config.email_sender,
+        to: user.email,
+        subject: "Welcome To Code Assess System",
+        html,
+      });
+    }
+  }
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+  }
+
+  if (user.status === UserStatus.BLOCKED) {
+    throw new AppError(httpStatus.FORBIDDEN, "User Is Blocked");
+  }
+
+  if (user.isDeleted || user.status === UserStatus.DELETED) {
+    throw new AppError(httpStatus.GONE, "User Is Deleted");
+  }
+
+  const jwtPayload = {
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in as SignOptions,
+  );
+
+  const refreshToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_refresh_secret,
+    config.jwt_refresh_expires_in as SignOptions,
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
+
 export const AuthService = {
   register,
   verifyEmail,
   loginUser,
   getMe,
+  refreshToken,
+  googleLogin,
 };
