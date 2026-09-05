@@ -1,13 +1,14 @@
 import type { NextFunction, Request, Response } from "express";
 import type { JwtPayload } from "jsonwebtoken";
 
-
 import httpStatus from "http-status";
 import { catchAsync } from "../utils/catchAsync.js";
 import { AppError } from "../utils/AppError.js";
 import { jwtUtils } from "../utils/jwt.js";
 import config from "../config/index.js";
-import { Prisma } from "../../../generated/prisma/client.js";
+
+import type { Role } from "../../generated/prisma/enums.js";
+import { prisma } from "../lib/prisma.js";
 
 export interface RequestUser {
   email: string;
@@ -56,7 +57,7 @@ export const auth = (...requiredRoles: Role[]) => {
       );
     }
 
-    const user = await Prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: {
         id: userId,
         email,
@@ -66,11 +67,23 @@ export const auth = (...requiredRoles: Role[]) => {
     });
 
     if (!user) {
-      throw new AppError(httpStatus.NOT_FOUND, "User not found. Please log in again.");
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        "User not found. Please log in again.",
+      );
     }
 
     if (user.status === "BLOCKED") {
-      throw new AppError(httpStatus.FORBIDDEN, "Your account has been blocked. Please contact support.");
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "Your account has been blocked. Please contact support.",
+      );
+    }
+    if (user.status === "INACTIVE") {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "Your account is inactive. Please contact support.",
+      );
     }
 
     req.user = {

@@ -26,11 +26,12 @@ router.post(
   AuthController.loginUser,
 );
 
-// router.get(
-//   "/me",
-//   auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),
-//   // validateRequest
-// );
+router.get(
+  "/me",
+  auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),
+    // validateRequest
+  AuthController.getMe,
+);
 
 // google login
 

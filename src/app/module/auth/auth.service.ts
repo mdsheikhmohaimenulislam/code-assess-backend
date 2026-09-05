@@ -5,6 +5,7 @@ import { AppError } from "../../utils/AppError.js";
 import type {
   ILoginUserPayload,
   IRegisterPayload,
+  IRequestUser,
   IVerifyEmailPayload,
 } from "./auth.interface.js";
 import httpStatus from "http-status";
@@ -115,7 +116,10 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
     }
 
     if (isUserExist?.status === "INACTIVE") {
-      throw new AppError(httpStatus.FORBIDDEN, "User is Inactive");
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "Your account is inactive. Please contact support.",
+      );
     }
 
     // OTP
@@ -279,7 +283,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
     config.jwt_refresh_expires_in as SignOptions,
   );
 
-console.log("refresh Token");
+  console.log("refresh Token");
 
   return {
     accessToken,
@@ -287,8 +291,26 @@ console.log("refresh Token");
   };
 };
 
+const getMe = async (user: IRequestUser) => {
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      id: user.userId,
+    },
+    omit: {
+      password: true,
+    },
+  });
+
+  if (!isUserExists) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  return isUserExists;
+};
+
 export const AuthService = {
   register,
   verifyEmail,
   loginUser,
+  getMe,
 };

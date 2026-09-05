@@ -28,6 +28,29 @@ const LoginZodSchema = z.object({
     .regex(/[^A-Za-z0-9]/, "Password must contain atleast 1 Special Character"),
 });
 
+
+// const getMeResponseSchema = z.object({
+//   id: z.string().uuid(),
+//   name: z.string(),
+//   email: z.string().email(),
+//   googleId: z.string().nullable(),
+//   role: z.enum(["CANDIDATE", "COMPANY", "ADMIN"]),
+//   status: z.enum(["ACTIVE", "INACTIVE", "BLOCKED", "DELETED"]),
+//   emailVerified: z.boolean(),
+//   imageUrl: z.string(),
+//   isDeleted: z.boolean(),
+//   deletedAt: z.string().datetime().nullable(),
+//   createdAt: z.string().datetime(),
+//   updatedAt: z.string().datetime(),
+// });
+// const getMeResponseSchema = z.object({
+//   userId: z.string().uuid(),
+//   email: z.string().email(),
+//   name: z.string().min(1),
+//   role: z.enum(Role),
+// });
+
+
 const ForgotPasswordZodSchema = z.object({
   email: z.email(),
 });
@@ -56,4 +79,5 @@ export const UserValidation = {
   ForgotPasswordZodSchema,
   ResetPasswordZodSchema,
   EmailVerifyZodSchema,
+  // getMeResponseSchema
 };
