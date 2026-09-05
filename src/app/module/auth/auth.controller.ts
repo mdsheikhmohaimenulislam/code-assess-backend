@@ -5,6 +5,9 @@ import { sendResponse } from "../../utils/sendResponse.js";
 import { AuthService } from "./auth.service.js";
 import type { IRequestUser } from "./auth.interface.js";
 import { AppError } from "../../utils/AppError.js";
+import config from "../../config/index.js";
+import type { SignOptions } from "jsonwebtoken";
+import { jwtUtils } from "../../utils/jwt.js";
 
 const register = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
@@ -91,8 +94,6 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
 
   const result = await AuthService.getMe(user);
 
-
-  
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -100,7 +101,6 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-
 
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
   if (!req.cookies.refreshToken) {
@@ -133,41 +133,6 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
-const googleLogin = catchAsync(async (req: Request, res: Response) => {
-
-  console.log("Google Login Body:", req.body);
-
-  const payload = req.body;
-
-  const result = await AuthService.googleLogin(payload);
-
-  const { accessToken, refreshToken } = result;
-
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: false,
-    sameSite: "none",
-    maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
-  });
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: false,
-    sameSite: "none",
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-  });
-
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "New tokens generated successfully",
-    data: {
-      accessToken,
-      refreshToken,
-    },
-  });
-});
-
 const forgotPassword = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
 
@@ -194,13 +159,62 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+
+const googleLogin = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+
+  if (!user) {
+    return res.redirect(`${config.frontend_url}/login?error=google-login-failed`);
+  }
+
+  const jwtPayload = {
+    userId: user.userId,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in as SignOptions,
+  );
+
+  const refreshToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_refresh_secret,
+    config.jwt_refresh_expires_in as SignOptions,
+  );
+
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 1000 * 60 * 60 * 24,
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 1000 * 60 * 60 * 24 * 7,
+  });
+
+  return res.redirect(
+    `${config.frontend_url}/google-success?role=${user.role}`,
+  );
+});
+
+
 export const AuthController = {
   register,
   verifyEmail,
   loginUser,
   getMe,
-    refreshToken,
-    googleLogin,
-    forgotPassword,
-    resetPassword,
+  refreshToken,
+  googleLogin,
+  forgotPassword,
+  resetPassword,
+
 };

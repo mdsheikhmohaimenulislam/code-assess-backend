@@ -5,6 +5,7 @@ import { AppError } from "../../utils/AppError.js";
 import type {
   IForgotPasswordPayload,
   IGoogleLoginPayload,
+  IGoogleUser,
   ILoginUserPayload,
   IRegisterPayload,
   IRequestUser,
@@ -367,153 +368,6 @@ const refreshToken = async (token: string) => {
   };
 };
 
-const googleLogin = async (payload: IGoogleLoginPayload) => {
-  let googleIdTokenPayload: TokenPayload | null | undefined = null;
-  try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: payload.idToken,
-      audience: config.google_client_id,
-    });
-
-    googleIdTokenPayload = ticket.getPayload();
-  } catch (error) {
-    console.log("Google ID Token Verification Failed", error);
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "Invalid Or Expired Google Id Token",
-    );
-  }
-
-  if (!googleIdTokenPayload) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "Invalid Or Expired Google Id Token",
-    );
-  }
-
-  if (!googleIdTokenPayload.email) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Google Email Not Found");
-  }
-  if (!googleIdTokenPayload.name) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "Google Email User Name Not Found",
-    );
-  }
-
-  const ifUserExistWithGoogleAuth = await prisma.user.findFirst({
-    where: {
-      email: googleIdTokenPayload.email,
-      role: Role.CANDIDATE,
-      googleId: googleIdTokenPayload.sub,
-    },
-  });
-
-  let user = ifUserExistWithGoogleAuth;
-
-  if (!ifUserExistWithGoogleAuth) {
-    const ifUserExistWithCredentials = await prisma.user.findFirst({
-      where: {
-        email: googleIdTokenPayload.email,
-        role: Role.CANDIDATE,
-        authProvider: AuthProvider.CREDENTIAL,
-      },
-    });
-
-    if (ifUserExistWithCredentials) {
-      if (!ifUserExistWithCredentials.emailVerified) {
-        throw new AppError(httpStatus.FORBIDDEN, "Email Not Verified");
-      }
-
-      if (ifUserExistWithCredentials.status === UserStatus.BLOCKED) {
-        throw new AppError(httpStatus.FORBIDDEN, "User Is Blocked");
-      }
-
-      if (
-        ifUserExistWithCredentials.isDeleted ||
-        ifUserExistWithCredentials.status === UserStatus.DELETED
-      ) {
-        throw new AppError(httpStatus.GONE, "User Is Deleted");
-      }
-
-      user = await prisma.user.update({
-        where: {
-          id: ifUserExistWithCredentials.id,
-        },
-
-        data: {
-          googleId: googleIdTokenPayload.sub,
-        },
-      });
-    } else {
-      // Google Register
-      user = await prisma.user.create({
-        data: {
-          name: googleIdTokenPayload.name,
-          email: googleIdTokenPayload.email,
-          role: Role.CANDIDATE,
-          googleId: googleIdTokenPayload.sub,
-          authProvider: AuthProvider.GOOGLE,
-          emailVerified: true,
-        },
-      });
-
-      const tempatePath = path.join(
-        process.cwd(),
-        "src/app/templates/candidate-welcome-email.ejs",
-      );
-
-      const templateData = {
-        name: user.name,
-      };
-
-      const html = await ejs.renderFile(tempatePath, templateData);
-
-      await transporter.sendMail({
-        from: config.email_sender,
-        to: user.email,
-        subject: "Welcome To Code Assess System",
-        html,
-      });
-    }
-  }
-
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
-  }
-
-  if (user.status === UserStatus.BLOCKED) {
-    throw new AppError(httpStatus.FORBIDDEN, "User Is Blocked");
-  }
-
-  if (user.isDeleted || user.status === UserStatus.DELETED) {
-    throw new AppError(httpStatus.GONE, "User Is Deleted");
-  }
-
-  const jwtPayload = {
-    userId: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-  };
-
-  const accessToken = jwtUtils.createToken(
-    jwtPayload,
-    config.jwt_access_secret,
-    config.jwt_access_expires_in as SignOptions,
-  );
-
-  const refreshToken = jwtUtils.createToken(
-    jwtPayload,
-    config.jwt_refresh_secret,
-    config.jwt_refresh_expires_in as SignOptions,
-  );
-
-  return {
-    accessToken,
-    refreshToken,
-  };
-};
 
 const forgotPassword = async (payload: IForgotPasswordPayload) => {
   const { email } = payload;
@@ -624,8 +478,6 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
     Number(config.bcrypt_salt_rounds),
   );
 
-
-
   await prisma.user.update({
     where: {
       email: isUserExist.email,
@@ -648,8 +500,6 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
 
   const html = await ejs.renderFile(tempatePath, templateData);
 
-
-
   await transporter.sendMail({
     from: config.email_sender,
     to: isUserExist.email,
@@ -657,6 +507,103 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
     html,
   });
 };
+
+
+
+
+
+
+
+
+const googleLogin = async (payload: IGoogleUser) => {
+  const { googleId, email, name, imageUrl } = payload;
+
+  // 1. Google ID দিয়ে user খুঁজবে
+  let user = await prisma.user.findFirst({
+    where: {
+      googleId,
+    },
+  });
+
+  // 2. Google ID দিয়ে user না পাওয়া গেলে email দিয়ে খুঁজবে
+  if (!user) {
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    // 3. Existing email user পাওয়া গেলে Google account link করবে
+    if (existingUser) {
+      if (existingUser.status === UserStatus.BLOCKED) {
+        throw new AppError(
+          httpStatus.FORBIDDEN,
+          "User is blocked",
+        );
+      }
+
+      if (
+        existingUser.isDeleted ||
+        existingUser.status === UserStatus.DELETED
+      ) {
+        throw new AppError(
+          httpStatus.GONE,
+          "User is deleted",
+        );
+      }
+
+      user = await prisma.user.update({
+        where: {
+          id: existingUser.id,
+        },
+        data: {
+          googleId,
+          authProvider: AuthProvider.GOOGLE,
+          emailVerified: true,
+          imageUrl: imageUrl ?? existingUser.imageUrl,
+        },
+      });
+    } else {
+      // 4. Completely new Google user
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          googleId,
+          authProvider: AuthProvider.GOOGLE,
+          role: Role.CANDIDATE,
+          status: UserStatus.ACTIVE,
+          emailVerified: true,
+          imageUrl: imageUrl ?? null,
+        },
+      });
+    }
+  }
+
+  // 5. Final status check
+  if (user.status === UserStatus.BLOCKED) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "User is blocked",
+    );
+  }
+
+  if (
+    user.isDeleted ||
+    user.status === UserStatus.DELETED
+  ) {
+    throw new AppError(
+      httpStatus.GONE,
+      "User is deleted",
+    );
+  }
+
+  return user;
+};
+
+
+
+
 
 export const AuthService = {
   register,
@@ -667,4 +614,5 @@ export const AuthService = {
   googleLogin,
   forgotPassword,
   resetPassword,
+ 
 };

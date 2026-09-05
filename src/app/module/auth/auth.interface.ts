@@ -38,3 +38,11 @@ export interface IResetPasswordPayload {
   newPassword: string;
   otp: string;
 }
+
+
+export interface IGoogleUser {
+  googleId: string;
+  email: string;
+  name: string;
+  imageUrl?: string;
+}
