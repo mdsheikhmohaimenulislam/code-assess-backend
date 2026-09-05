@@ -29,7 +29,7 @@ router.post(
 router.get(
   "/me",
   auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),
-    // validateRequest
+  // validateRequest
   AuthController.getMe,
 );
 
@@ -41,12 +41,13 @@ router.post("/google", AuthController.googleLogin);
 router.post(
   "/forgot-password",
   validateRequest(UserValidation.ForgotPasswordZodSchema),
-  AuthController.forgotPassword
+  AuthController.forgotPassword,
 );
 
-// router.post(
-//   "/reset-password",
-//   validateRequest(UserValidation.ResetPasswordZodSchema),
-// );
+router.post(
+  "/reset-password",
+  validateRequest(UserValidation.ResetPasswordZodSchema),
+  AuthController.resetPassword,
+);
 
 export const AuthRoutes = router;
