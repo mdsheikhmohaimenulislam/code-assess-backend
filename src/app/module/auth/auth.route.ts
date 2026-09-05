@@ -11,16 +11,21 @@ router.post(
   "/register",
 
   validateRequest(UserValidation.RegistrationZodSchema),
-  AuthController.register
+  AuthController.register,
 );
 
 router.post(
   "/verify-email",
   validateRequest(UserValidation.EmailVerifyZodSchema),
-  AuthController.verifyEmail
+  AuthController.verifyEmail,
 );
 
-// router.post("/login", validateRequest(UserValidation.LoginZodSchema));
+router.post(
+  "/login",
+  validateRequest(UserValidation.LoginZodSchema),
+  AuthController.loginUser,
+);
+
 // router.get(
 //   "/me",
 //   auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),

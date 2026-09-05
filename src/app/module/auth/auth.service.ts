@@ -3,6 +3,7 @@ import crypto from "crypto";
 import ejs from "ejs";
 import { AppError } from "../../utils/AppError.js";
 import type {
+  ILoginUserPayload,
   IRegisterPayload,
   IVerifyEmailPayload,
 } from "./auth.interface.js";
@@ -215,7 +216,79 @@ const verifyEmail = async (payload: IVerifyEmailPayload) => {
   }
 };
 
+const loginUser = async (payload: ILoginUserPayload) => {
+  const { password } = payload;
+  const email = payload.email.trim().toLowerCase();
+
+  console.log(email, password);
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "user not found");
+  }
+
+  if (user.status === UserStatus.BLOCKED) {
+    throw new AppError(httpStatus.FORBIDDEN, "User is blocked");
+  }
+
+  if (user.isDeleted || user.status === UserStatus.DELETED) {
+    throw new AppError(httpStatus.GONE, "User is deleted");
+  }
+
+  if (user.password === null && user.googleId !== null) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      "User Already Has Account Registered With Google. Try To Login With Google.",
+    );
+  }
+
+  const isPasswordMatched = await bcrypt.compare(
+    password,
+    user.password as string,
+  );
+
+  console.log("is passwormatched");
+
+  if (!isPasswordMatched) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials");
+  }
+
+  const jwtPayload = {
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  console.log("jwt payload");
+
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in as SignOptions,
+  );
+
+  console.log("access token");
+
+  const refreshToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_refresh_secret,
+    config.jwt_refresh_expires_in as SignOptions,
+  );
+
+console.log("refresh Token");
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
+
 export const AuthService = {
   register,
   verifyEmail,
+  loginUser,
 };
