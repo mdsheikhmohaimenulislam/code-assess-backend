@@ -2,6 +2,8 @@ import { Router } from "express";
 import { auth } from "../../middlewares/checkAuth.js";
 import { Role } from "../../../generated/prisma/enums.js";
 import { UserController } from "./user.controller.js";
+import { UserValidation } from "./user.validation.js";
+import { validateRequest } from "../../middlewares/validateRequst.js";
 
 const route = Router();
 
@@ -11,35 +13,25 @@ route.get(
   UserController.getSingleUser,
 );
 
-
 route.get(
   "/",
-  auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),
+  auth(Role.ADMIN),
 
   UserController.getAllUsers,
 );
 
-
-
-
-
-
-
 route.patch(
-  "/me",
+  "/me/:id",
   auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),
-  //   validateRequest(updateMyProfileSchema),
-  //   UserController.updateMyProfile,
+  validateRequest(UserValidation.updateMyProfileSchema),
+  UserController.updateMyProfile,
 );
 
-
-
-
 route.patch(
-  "/:id/status",
-  auth(Role.ADMIN, Role.CANDIDATE, Role.COMPANY),
-  //   validateRequest(updateUserStatusSchema),
-  //   UserController.updateUserStatus,
+  "/status/:id",
+  auth(Role.ADMIN),
+  validateRequest(UserValidation.updateUserProfileSchema),
+  UserController.updateUserStatus,
 );
 
 route.patch(

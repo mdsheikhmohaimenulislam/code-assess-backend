@@ -5,7 +5,18 @@ export interface IGetAllUsersQuery {
   limit?: string;
   search?: string;
   role?: Role;
-  status?: UserStatus
-  sortBy?: "createdAt"
+  status?: UserStatus;
+  sortBy?: "createdAt";
   sortOrder?: "asc" | "desc";
+}
+export interface IUpdatedProfile {
+  name?: string;
+  imageUrl?: string;
+}
+
+export interface IUserUpdatedProfile {
+  name?: string;
+  imageUrl?: string;
+  role?: Role;
+  status?: UserStatus;
 }

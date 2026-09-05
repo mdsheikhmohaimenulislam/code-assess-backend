@@ -1,8 +1,7 @@
 import type { Prisma } from "../../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
-import type { IGetAllUsersQuery } from "./user.interface.js";
-
+import type { IGetAllUsersQuery, IUpdatedProfile, IUserUpdatedProfile } from "./user.interface.js";
 
 const getSingleUser = async (id: string) => {
   const user = await prisma.user.findFirst({
@@ -31,16 +30,10 @@ const getSingleUser = async (id: string) => {
 
   return user;
 };
-
-
-
 const getAllUsers = async (query: IGetAllUsersQuery) => {
   const page = Math.max(Number(query.page) || 1, 1);
 
-  const limit = Math.min(
-    Math.max(Number(query.limit) || 10, 1),
-    100,
-  );
+  const limit = Math.min(Math.max(Number(query.limit) || 10, 1), 100);
 
   const skip = (page - 1) * limit;
 
@@ -122,12 +115,112 @@ const getAllUsers = async (query: IGetAllUsersQuery) => {
   };
 };
 
+const updateMyProfile = async (userId: string, payload: IUpdatedProfile) => {
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      id: userId,
+      isDeleted: false,
+      deletedAt: null,
+    },
+  });
+
+  if (!existingUser) {
+    throw new AppError(404, "User not found");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      ...(payload.name !== undefined && {
+        name: payload.name,
+      }),
+
+      ...(payload.imageUrl !== undefined && {
+        imageUrl: payload.imageUrl,
+      }),
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      authProvider: true,
+      status: true,
+      emailVerified: true,
+      imageUrl: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return updatedUser;
+};
+
+
+
+const updateUserStatus = async (
+  userId: string,
+  payload: IUserUpdatedProfile,
+) => {
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      id: userId,
+      isDeleted: false,
+      deletedAt: null,
+    },
+  });
+
+  if (!existingUser) {
+    throw new AppError(404, "User not found");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+
+    data: {
+      ...(payload.name !== undefined && {
+        name: payload.name,
+      }),
+
+      ...(payload.imageUrl !== undefined && {
+        imageUrl: payload.imageUrl,
+      }),
+
+      ...(payload.role !== undefined && {
+        role: payload.role,
+      }),
+
+      ...(payload.status !== undefined && {
+        status: payload.status,
+      }),
+    },
+
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      authProvider: true,
+      status: true,
+      emailVerified: true,
+      imageUrl: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return updatedUser;
+};
 
 export const UserService = {
-    getAllUsers,
-  //   getMyProfile,
-  //   updateMyProfile,
+  getAllUsers,
+
+  updateMyProfile,
   getSingleUser,
-  //   updateUserStatus,
+    updateUserStatus,
   //   deleteUser,
 };
