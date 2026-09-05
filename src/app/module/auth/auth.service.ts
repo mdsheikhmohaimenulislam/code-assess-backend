@@ -3,6 +3,7 @@ import crypto from "crypto";
 import ejs from "ejs";
 import { AppError } from "../../utils/AppError.js";
 import type {
+  IForgotPasswordPayload,
   IGoogleLoginPayload,
   ILoginUserPayload,
   IRegisterPayload,
@@ -15,12 +16,15 @@ import { redisClient } from "../../lib/redis.js";
 import path from "path";
 import { transporter } from "../../lib/nodemailer.js";
 import config from "../../config/index.js";
-import { AuthProvider, Role, UserStatus } from "../../../generated/prisma/enums.js";
+import {
+  AuthProvider,
+  Role,
+  UserStatus,
+} from "../../../generated/prisma/enums.js";
 import { jwtUtils } from "../../utils/jwt.js";
 import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import type { TokenPayload } from "google-auth-library";
 import { googleClient } from "../../lib/googleAuth.js";
-
 
 const register = async (payload: IRegisterPayload) => {
   const { name, password } = payload;
@@ -510,6 +514,69 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
   };
 };
 
+const forgotPassword = async (payload: IForgotPasswordPayload) => {
+  const { email } = payload;
+
+  const isUserExist = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!isUserExist) {
+    throw new AppError(httpStatus.NOT_FOUND, "User Does Not Exist!");
+  }
+
+  if (isUserExist.status === "BLOCKED") {
+    throw new AppError(httpStatus.FORBIDDEN, "User is Blocked");
+  }
+
+  if (!isUserExist.emailVerified) {
+    throw new AppError(httpStatus.FORBIDDEN, "User Not Verified");
+  }
+
+  if (isUserExist.isDeleted || isUserExist.status === "DELETED") {
+    throw new AppError(httpStatus.GONE, "User is Deleted");
+  }
+
+  if (isUserExist.googleId && isUserExist.authProvider === "GOOGLE") {
+    throw new AppError(httpStatus.CONFLICT, "User Has Account With Google");
+  }
+
+  const otp = crypto.randomInt(100000, 1000000).toString();
+
+  const key = `forgor-password-otp:${isUserExist.email}`;
+
+  const expirationSeconds = 5 * 60;
+
+  await redisClient.set(key, otp, {
+    expiration: {
+      type: "EX",
+      value: expirationSeconds,
+    },
+  });
+
+  const tempatePath = path.join(
+    process.cwd(),
+    "src/app/templates/forgotPassword.ejs",
+  );
+
+  const templateData = {
+    name: isUserExist.name,
+    otp,
+    expirationMinutes: expirationSeconds / 60,
+  };
+
+  const html = await ejs.renderFile(tempatePath, templateData);
+
+  await transporter.sendMail({
+    from: config.email_sender,
+    to: isUserExist.email,
+    subject: "Forgot Password",
+    html,
+  });
+};
+
 export const AuthService = {
   register,
   verifyEmail,
@@ -517,4 +584,5 @@ export const AuthService = {
   getMe,
   refreshToken,
   googleLogin,
+  forgotPassword,
 };
