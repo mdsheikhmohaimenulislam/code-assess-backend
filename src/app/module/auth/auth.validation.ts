@@ -73,7 +73,7 @@ const EmailVerifyZodSchema = z.object({
   otp: z.string().length(6),
 });
 
-export const UserValidation = {
+export const AuthValidation = {
   RegistrationZodSchema,
   LoginZodSchema,
   ForgotPasswordZodSchema,

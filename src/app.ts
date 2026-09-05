@@ -12,6 +12,7 @@ import { AuthRoutes } from "./app/module/auth/auth.route.js";
 import { globalErrorHandler } from "./app/middlewares/globalErrorHandler.js";
 import { notFound } from "./app/middlewares/notFound.js";
 import passport from "./app/utils/passport.js";
+import { userRoute } from "./app/module/user/user.route.js";
 
 const app: Application = express();
 
@@ -31,6 +32,8 @@ app.use(cookieParser());
 app.use(passport.initialize());
 
 app.use("/api/v1/auth", AuthRoutes);
+app.use("/api/v1/users", userRoute);
+
 
 // Basic route...
 app.get("/", async (req: Request, res: Response) => {

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "../../middlewares/validateRequst.js";
-import { UserValidation } from "./auth.validation.js";
+import { AuthValidation } from "./auth.validation.js";
 import { auth } from "../../middlewares/checkAuth.js";
 import { Role } from "../../../generated/prisma/enums.js";
 import { AuthController } from "./auth.controller.js";
@@ -11,19 +11,19 @@ const router = Router();
 router.post(
   "/register",
 
-  validateRequest(UserValidation.RegistrationZodSchema),
+  validateRequest(AuthValidation.RegistrationZodSchema),
   AuthController.register,
 );
 
 router.post(
   "/verify-email",
-  validateRequest(UserValidation.EmailVerifyZodSchema),
+  validateRequest(AuthValidation.EmailVerifyZodSchema),
   AuthController.verifyEmail,
 );
 
 router.post(
   "/login",
-  validateRequest(UserValidation.LoginZodSchema),
+  validateRequest(AuthValidation.LoginZodSchema),
   AuthController.loginUser,
 );
 
@@ -41,13 +41,13 @@ router.post("/refresh-token", AuthController.refreshToken);
 
 router.post(
   "/forgot-password",
-  validateRequest(UserValidation.ForgotPasswordZodSchema),
+  validateRequest(AuthValidation.ForgotPasswordZodSchema),
   AuthController.forgotPassword,
 );
 
 router.post(
   "/reset-password",
-  validateRequest(UserValidation.ResetPasswordZodSchema),
+  validateRequest(AuthValidation.ResetPasswordZodSchema),
   AuthController.resetPassword,
 );
 
