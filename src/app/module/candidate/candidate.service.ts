@@ -131,42 +131,42 @@ const getMyCandidate = async (userId: string) => {
   return candidate;
 };
 
-// const getCandidateById = async (
-//   candidateId: string
-// ) => {
-//   const candidate =
-//     await prisma.candidateProfile.findUnique({
-//       where: {
-//         id: candidateId,
-//       },
-//       include: {
-//         user: {
-//           select: {
-//             id: true,
-//             name: true,
-//             email: true,
-//             role: true,
-//           },
-//         },
+const getCandidateById = async (candidateId: string) => {
+  const candidate =
+    await prisma.candidateProfile.findUnique({
+      where: {
+        id: candidateId,
+      },
 
-//         _count: {
-//           select: {
-//             invitations: true,
-//             attempts: true,
-//           },
-//         },
-//       },
-//     });
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+          },
+        },
 
-//   if (!candidate) {
-//     throw new ApiError(
-//       404,
-//       "Candidate profile not found"
-//     );
-//   }
+        _count: {
+          select: {
+            invitations: true,
+            attempts: true,
+          },
+        },
+      },
+    });
 
-//   return candidate;
-// };
+  if (!candidate) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Candidate profile not found",
+    );
+  }
+
+  return candidate;
+};
 
 // const updateCandidate = async (
 //   userId: string,
@@ -294,7 +294,7 @@ const getMyCandidate = async (userId: string) => {
 export const CandidateService = {
   createCandidate,
     getMyCandidate,
-  //   getCandidateById,
+    getCandidateById,
   //   updateCandidate,
   //   deleteCandidate,
 };

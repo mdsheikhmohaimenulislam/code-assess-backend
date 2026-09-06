@@ -58,19 +58,27 @@ const getMyCandidate = catchAsync(
 );
 
 
-// const getCandidateById = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const result = await CandidateService.getCandidateById(
-//       req.params.id
-//     );
+const getCandidateById = catchAsync(
+  async (req: Request, res: Response) => {
+    const candidateId = req.params.id;
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Candidate profile retrieved successfully",
-//       data: result,
-//     });
-//   }
-// );
+    if (!candidateId) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Candidate ID is required",
+      );
+    }
+
+    const result =
+      await CandidateService.getCandidateById(candidateId as string);
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: "Candidate profile retrieved successfully",
+      data: result,
+    });
+  },
+);
 
 
 // const updateCandidate = catchAsync(
@@ -112,7 +120,7 @@ const getMyCandidate = catchAsync(
 export const CandidateController = {
   createCandidate,
   getMyCandidate,
-//   getCandidateById,
+  getCandidateById,
 //   updateCandidate,
 //   deleteCandidate,
 };
