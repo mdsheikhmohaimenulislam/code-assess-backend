@@ -1,0 +1,129 @@
+import type { Request, Response } from "express";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { AssessmentProblemService } from "./assessmentProblem.service.js";
+import { AppError } from "../../utils/AppError.js";
+import httpStatus from "http-status";
+import { sendResponse } from "../../utils/sendResponse.js";
+
+const createAssessmentProblem = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    const { id } = req.params;
+
+    // console.log(req.params);
+
+    if (!userId || !userRole) {
+      throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+    }
+
+    if (!id) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Assessment ID is required");
+    }
+
+    const result = await AssessmentProblemService.createAssessmentProblem(
+      userId,
+      userRole,
+      id as string,
+      req.body,
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.CREATED,
+      success: true,
+      message: "Problem added to assessment successfully",
+      data: result,
+    });
+  },
+);
+
+// const getAssessmentProblems = catchAsync(
+//   async (req: Request, res: Response) => {
+//     const result =
+//       await AssessmentProblemService.getAssessmentProblems(
+//         req.params.assessmentId
+//       );
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Assessment problems retrieved successfully",
+//       data: result,
+//     });
+//   }
+// );
+
+// /**
+//  * Get single AssessmentProblem
+//  */
+// const getAssessmentProblemById = catchAsync(
+//   async (req: Request, res: Response) => {
+//     const result =
+//       await AssessmentProblemService.getAssessmentProblemById(
+//         req.params.assessmentId,
+//         req.params.id
+//       );
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Assessment problem retrieved successfully",
+//       data: result,
+//     });
+//   }
+// );
+
+// /**
+//  * Update AssessmentProblem
+//  */
+// const updateAssessmentProblem = catchAsync(
+//   async (req: Request, res: Response) => {
+//     const userId = req.user!.userId;
+//     const userRole = req.user!.role;
+
+//     const result =
+//       await AssessmentProblemService.updateAssessmentProblem(
+//         userId,
+//         userRole,
+//         req.params.assessmentId,
+//         req.params.id,
+//         req.body
+//       );
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Assessment problem updated successfully",
+//       data: result,
+//     });
+//   }
+// );
+
+// /**
+//  * Delete AssessmentProblem
+//  */
+// const deleteAssessmentProblem = catchAsync(
+//   async (req: Request, res: Response) => {
+//     const userId = req.user!.userId;
+//     const userRole = req.user!.role;
+
+//     const result =
+//       await AssessmentProblemService.deleteAssessmentProblem(
+//         userId,
+//         userRole,
+//         req.params.assessmentId,
+//         req.params.id
+//       );
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Problem removed from assessment successfully",
+//       data: result,
+//     });
+//   }
+// );
+
+export const AssessmentProblemController = {
+  createAssessmentProblem,
+  //   getAssessmentProblems,
+  //   getAssessmentProblemById,
+  //   updateAssessmentProblem,
+  //   deleteAssessmentProblem,
+};
