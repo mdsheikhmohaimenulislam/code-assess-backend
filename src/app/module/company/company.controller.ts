@@ -70,26 +70,42 @@ const getCompanyById = catchAsync(
   },
 );
 
-// // Update company
-// const updateCompany = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
-//     const { id } = req.params;
+// Update company
+const updateCompany = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    const { id } = req.params;
 
-//     const result =
-//       await CompanyService.updateCompany(
-//         userId,
-//         id,
-//         req.body,
-//       );
+    if (!userId || !userRole) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Company profile updated successfully",
-//       data: result,
-//     });
-//   },
-// );
+    if (!id) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Company ID is required",
+      );
+    }
+
+    const result = await CompanyService.updateCompany(
+      userId,
+      userRole,
+      id as string,
+      req.body,
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Company profile updated successfully",
+      data: result,
+    });
+  },
+);
 
 // // Delete company
 // const deleteCompany = catchAsync(
@@ -115,6 +131,6 @@ export const CompanyController = {
   createCompany,
     getMyCompany,
     getCompanyById,
-  //   updateCompany,
+    updateCompany,
   //   deleteCompany,
 };

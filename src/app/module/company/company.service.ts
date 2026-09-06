@@ -1,7 +1,7 @@
 import { AssessmentStatus, Role } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
-import type { CreateCompanyPayload } from "./company.interface.js";
+import type { CreateCompanyPayload, UpdateCompanyPayload } from "./company.interface.js";
 import httpStatus from "http-status";
 
 // Create company profile
@@ -324,76 +324,123 @@ const getCompanyById = async (companyId: string) => {
   return company;
 };
 
-// // Update company
-// const updateCompany = async (
-//   userId: string,
-//   companyId: string,
-//   payload: UpdateCompanyPayload,
-// ) => {
+// Update company
+const updateCompany = async (
+  userId: string,
+  userRole: Role,
+  companyId: string,
+  payload: UpdateCompanyPayload,
+) => {
+  if (!userId) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      "Unauthorized",
+    );
+  }
 
-//   const company =
-//     await prisma.companyProfile.findUnique({
-//       where: {
-//         id: companyId,
-//       },
+  if (!companyId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Company ID is required",
+    );
+  }
 
-//       select: {
-//         id: true,
-//         userId: true,
-//       },
-//     });
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      id: companyId,
+    },
+    select: {
+      id: true,
+      userId: true,
+      companyName: true,
+    },
+  });
 
-//   if (!company) {
-//     throw new Error(
-//       "Company profile not found",
-//     );
-//   }
+  if (!company) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Company profile not found",
+    );
+  }
 
-//   // Ownership check
-//   if (company.userId !== userId) {
-//     throw new Error(
-//       "You can only update your own company profile",
-//     );
-//   }
+  // COMPANY can update only their own company profile
+  if (
+    userRole === Role.COMPANY &&
+    company.userId !== userId
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You can only update your own company profile",
+    );
+  }
 
-//   const updatedCompany =
-//     await prisma.companyProfile.update({
-//       where: {
-//         id: companyId,
-//       },
+  // Check duplicate company name
+  if (
+    payload.companyName !== undefined &&
+    payload.companyName.trim() !== company.companyName
+  ) {
+    const companyName = payload.companyName.trim();
 
-//       data: {
-//         ...(payload.companyName !== undefined && {
-//           companyName: payload.companyName,
-//         }),
+    const existingCompany =
+      await prisma.companyProfile.findFirst({
+        where: {
+          companyName: {
+            equals: companyName,
+            mode: "insensitive",
+          },
+          id: {
+            not: companyId,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
 
-//         ...(payload.description !== undefined && {
-//           description: payload.description,
-//         }),
+    if (existingCompany) {
+      throw new AppError(
+        httpStatus.CONFLICT,
+        "A company with this name already exists",
+      );
+    }
+  }
 
-//         ...(payload.website !== undefined && {
-//           website: payload.website,
-//         }),
+  const updatedCompany =
+    await prisma.companyProfile.update({
+      where: {
+        id: companyId,
+      },
+      data: {
+        ...(payload.companyName !== undefined && {
+          companyName: payload.companyName.trim(),
+        }),
 
-//         ...(payload.logo !== undefined && {
-//           logo: payload.logo,
-//         }),
-//       },
+        ...(payload.description !== undefined && {
+          description: payload.description.trim(),
+        }),
 
-//       select: {
-//         id: true,
-//         userId: true,
-//         companyName: true,
-//         description: true,
-//         website: true,
-//         logo: true,
-//         createdAt: true,
-//         updatedAt: true,
-//       },
-//     });
+        ...(payload.website !== undefined && {
+          website: payload.website.trim(),
+        }),
 
-//   return updatedCompany;
-// };
+        ...(payload.logo !== undefined && {
+          logo: payload.logo.trim(),
+        }),
+      },
+      select: {
+        id: true,
+        userId: true,
+        companyName: true,
+        description: true,
+        website: true,
+        logo: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+  return updatedCompany;
+};
 
 // // Delete company
 // const deleteCompany = async (
@@ -445,6 +492,6 @@ export const CompanyService = {
   createCompany,
     getMyCompany,
     getCompanyById,
-  //   updateCompany,
+    updateCompany,
   //   deleteCompany,
 };
