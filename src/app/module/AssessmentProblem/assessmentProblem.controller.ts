@@ -37,29 +37,33 @@ const createAssessmentProblem = catchAsync(
   },
 );
 
-// const getAssessmentProblems = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const result =
-//       await AssessmentProblemService.getAssessmentProblems(
-//         req.params.assessmentId
-//       );
+const getAssessmentProblems = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    console.log(id);
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Assessment problems retrieved successfully",
-//       data: result,
-//     });
-//   }
-// );
+    if (!id) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Assessment ID is required");
+    }
 
-// /**
-//  * Get single AssessmentProblem
-//  */
+    const result = await AssessmentProblemService.getAssessmentProblems(
+      id as string,
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Assessment problems retrieved successfully",
+      data: result,
+    });
+  },
+);
+
 // const getAssessmentProblemById = catchAsync(
 //   async (req: Request, res: Response) => {
 //     const result =
 //       await AssessmentProblemService.getAssessmentProblemById(
-//         req.params.assessmentId,
+//         req.params.id,
 //         req.params.id
 //       );
 
@@ -83,7 +87,7 @@ const createAssessmentProblem = catchAsync(
 //       await AssessmentProblemService.updateAssessmentProblem(
 //         userId,
 //         userRole,
-//         req.params.assessmentId,
+//         req.params.id,
 //         req.params.id,
 //         req.body
 //       );
@@ -108,7 +112,7 @@ const createAssessmentProblem = catchAsync(
 //       await AssessmentProblemService.deleteAssessmentProblem(
 //         userId,
 //         userRole,
-//         req.params.assessmentId,
+//         req.params.id,
 //         req.params.id
 //       );
 
@@ -122,7 +126,7 @@ const createAssessmentProblem = catchAsync(
 
 export const AssessmentProblemController = {
   createAssessmentProblem,
-  //   getAssessmentProblems,
+  getAssessmentProblems,
   //   getAssessmentProblemById,
   //   updateAssessmentProblem,
   //   deleteAssessmentProblem,

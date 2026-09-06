@@ -195,34 +195,62 @@ const createAssessmentProblem = async (
   return result;
 };
 
-//
-// const getAssessmentProblems = async (
-//   assessmentId: string
-// ) => {
-//   const assessment = await prisma.assessment.findUnique({
-//     where: {
-//       id: assessmentId,
-//     },
-//   });
 
-//   if (!assessment) {
-//     throw new ApiError(404, "Assessment not found");
-//   }
+const getAssessmentProblems = async (
+  assessmentId: string,
+) => {
+  const assessment =
+    await prisma.assessment.findUnique({
+      where: {
+        id: assessmentId,
+      },
+      select: {
+        id: true,
+      },
+    });
 
-//   const result = await prisma.assessmentProblem.findMany({
-//     where: {
-//       assessmentId,
-//     },
-//     include: {
-//       problem: true,
-//     },
-//     orderBy: {
-//       order: "asc",
-//     },
-//   });
+  if (!assessment) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Assessment not found",
+    );
+  }
 
-//   return result;
-// };
+  const result =
+    await prisma.assessmentProblem.findMany({
+      where: {
+        assessmentId,
+      },
+      orderBy: {
+        order: "asc",
+      },
+      select: {
+        id: true,
+        assessmentId: true,
+        problemId: true,
+        marks: true,
+        order: true,
+
+        problem: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            type: true,
+            difficulty: true,
+            category: true,
+            inputFormat: true,
+            outputFormat: true,
+            constraints: true,
+            timeLimit: true,
+            memoryLimit: true,
+          },
+        },
+      },
+    });
+
+  return result;
+};
 
 // /**
 //  * Get single AssessmentProblem
@@ -463,7 +491,7 @@ const createAssessmentProblem = async (
 
 export const AssessmentProblemService = {
   createAssessmentProblem,
-//   getAssessmentProblems,
+  getAssessmentProblems,
 //   getAssessmentProblemById,
 //   updateAssessmentProblem,
 //   deleteAssessmentProblem,

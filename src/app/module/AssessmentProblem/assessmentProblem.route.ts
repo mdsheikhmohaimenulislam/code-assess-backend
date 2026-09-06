@@ -15,11 +15,11 @@ router.post(
   AssessmentProblemController.createAssessmentProblem,
 );
 
-// router.get(
-//   "/:assessmentId/problems",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   AssessmentProblemController.getAssessmentProblems
-// );
+router.get(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+  AssessmentProblemController.getAssessmentProblems
+);
 
 // router.get(
 //   "/:assessmentId/problems/:id",
