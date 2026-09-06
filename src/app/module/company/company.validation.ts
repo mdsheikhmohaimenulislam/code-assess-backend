@@ -29,6 +29,8 @@ export const createCompanyValidationSchema = z.object({
     .optional(),
 });
 
+
+
 export const updateCompanyValidationSchema =
   createCompanyValidationSchema
     .omit({

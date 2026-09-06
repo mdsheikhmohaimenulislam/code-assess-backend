@@ -52,10 +52,17 @@ const getCompanyById = catchAsync(
   async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const result =
-      await CompanyService.getCompanyById(id);
+    if (!id) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Company ID is required",
+      );
+    }
 
-    res.status(200).json({
+    const result = await CompanyService.getCompanyById(id as string);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
       success: true,
       message: "Company profile retrieved successfully",
       data: result,

@@ -1,4 +1,4 @@
-import { Role } from "../../../generated/prisma/enums.js";
+import { AssessmentStatus, Role } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import type { CreateCompanyPayload } from "./company.interface.js";
@@ -266,56 +266,57 @@ const getMyCompany = async (userId: string) => {
 };
 
 // Get company by ID
-const getCompanyById = async (
-  companyId: string,
-) => {
+const getCompanyById = async (companyId: string) => {
+  if (!companyId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Company ID is required",
+    );
+  }
 
-  const company =
-    await prisma.companyProfile.findUnique({
-      where: {
-        id: companyId,
-      },
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      id: companyId,
+    },
+    select: {
+      id: true,
+      companyName: true,
+      description: true,
+      website: true,
+      logo: true,
+      createdAt: true,
+      updatedAt: true,
 
-      select: {
-        id: true,
-        companyName: true,
-        description: true,
-        website: true,
-        logo: true,
-        createdAt: true,
-        updatedAt: true,
-
-        assessments: {
-          where: {
-            status: "PUBLISHED",
-          },
-
-          select: {
-            id: true,
-            title: true,
-            duration: true,
-            totalMarks: true,
-            passingMarks: true,
-            accessType: true,
-            price: true,
-            status: true,
-          },
-
-          orderBy: {
-            createdAt: "desc",
-          },
+      assessments: {
+        where: {
+          status: AssessmentStatus.PUBLISHED,
         },
-
-        _count: {
-          select: {
-            assessments: true,
-          },
+        select: {
+          id: true,
+          title: true,
+          duration: true,
+          totalMarks: true,
+          passingMarks: true,
+          accessType: true,
+          price: true,
+          status: true,
+        },
+        orderBy: {
+          createdAt: "desc",
         },
       },
-    });
+
+      _count: {
+        select: {
+          assessments: true,
+        },
+      },
+    },
+  });
 
   if (!company) {
-    throw new Error(
+    throw new AppError(
+      httpStatus.NOT_FOUND,
       "Company profile not found",
     );
   }

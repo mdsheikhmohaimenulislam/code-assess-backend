@@ -2,7 +2,7 @@ import { Router } from "express";
 import { auth } from "../../middlewares/checkAuth.js";
 import { Role } from "../../../generated/prisma/enums.js";
 import { validateRequest } from "../../middlewares/validateRequst.js";
-import { createCompanyValidationSchema } from "./company.validation.js";
+import {  createCompanyValidationSchema } from "./company.validation.js";
 import { CompanyController } from "./company.controller.js";
 
 
