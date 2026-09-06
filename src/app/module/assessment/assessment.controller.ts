@@ -111,8 +111,6 @@ const updateAssessment = catchAsync(
   },
 );
 
-
-
 const deleteAssessment = catchAsync(
   async (req: Request, res: Response) => {
     const userId = req.user?.userId;
@@ -149,62 +147,47 @@ const deleteAssessment = catchAsync(
   },
 );
 
-// const publishAssessment = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
-//     const userRole = req.user!.role;
 
-//     const result = await AssessmentService.publishAssessment(
-//       userId,
-//       userRole,
-//       req.params.id,
-//     );
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Assessment published successfully",
-//       data: result,
-//     });
-//   },
-// );
 
-// const cancelAssessment = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
-//     const userRole = req.user!.role;
 
-//     const result = await AssessmentService.cancelAssessment(
-//       userId,
-//       userRole,
-//       req.params.id,
-//     );
+const updateAssessmentStatus = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    const { id } = req.params;
+    const { status } = req.body;
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Assessment cancelled successfully",
-//       data: result,
-//     });
-//   },
-// );
+    if (!userId || !userRole) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-// const completeAssessment = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
-//     const userRole = req.user!.role;
+    if (!id) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Assessment ID is required",
+      );
+    }
 
-//     const result = await AssessmentService.completeAssessment(
-//       userId,
-//       userRole,
-//       req.params.id,
-//     );
+    const result =
+      await AssessmentService.updateAssessmentStatus(
+        userId,
+        userRole,
+        id as string,
+        status,
+      );
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Assessment completed successfully",
-//       data: result,
-//     });
-//   },
-// );
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: `Assessment ${status.toLowerCase()} successfully`,
+      data: result,
+    });
+  },
+);
 
 export const AssessmentController = {
   createAssessment,
@@ -212,7 +195,5 @@ export const AssessmentController = {
   getAssessmentById,
   updateAssessment,
   deleteAssessment,
-//   publishAssessment,
-//   cancelAssessment,
-//   completeAssessment,
+updateAssessmentStatus
 };

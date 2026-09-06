@@ -42,22 +42,11 @@ router.delete(
   AssessmentController.deleteAssessment,
 );
 
-// router.patch(
-//   "/:id/publish",
-//   auth(Role.ADMIN, Role.COMPANY),
-//   AssessmentController.publishAssessment,
-// );
 
-// router.patch(
-//   "/:id/cancel",
-//   auth(Role.ADMIN, Role.COMPANY),
-//   AssessmentController.cancelAssessment,
-// );
-
-// router.patch(
-//   "/:id/complete",
-//   auth(Role.ADMIN, Role.COMPANY),
-//   AssessmentController.completeAssessment,
-// );
+router.patch(
+  "/status/:id",
+  auth(Role.ADMIN, Role.COMPANY),
+  AssessmentController.updateAssessmentStatus,
+);
 
 export const AssessmentRoutes = router;
