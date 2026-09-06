@@ -492,10 +492,143 @@ const updateAssessmentProblem = async (
 };
 
 
+const deleteAssessmentProblem = async (
+  userId: string,
+  userRole: Role,
+  id: string,
+) => {
+  // Check authentication
+  if (!userId) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      "Unauthorized",
+    );
+  }
+
+  // Check assessment problem ID
+  if (!id) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Assessment problem ID is required",
+    );
+  }
+
+  // Find assessment problem
+  const assessmentProblem =
+    await prisma.assessmentProblem.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        assessmentId: true,
+        problemId: true,
+        marks: true,
+        order: true,
+
+        assessment: {
+          select: {
+            id: true,
+            status: true,
+            createdById: true,
+
+            company: {
+              select: {
+                userId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+  if (!assessmentProblem) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Assessment problem not found",
+    );
+  }
+
+  const assessment = assessmentProblem.assessment;
+
+  // Check ownership
+  if (
+    userRole === Role.COMPANY &&
+    assessment.company.userId !== userId
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to manage this assessment",
+    );
+  }
+
+  // Only draft assessment can be updated
+  if (
+    assessment.status !== AssessmentStatus.DRAFT
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Problems can only be deleted from a draft assessment",
+    );
+  }
+
+  // Delete + recalculate total marks
+  const result = await prisma.$transaction(
+    async (tx) => {
+      // Delete assessment problem
+      const deleted =
+        await tx.assessmentProblem.delete({
+          where: {
+            id: assessmentProblem.id,
+          },
+          select: {
+            id: true,
+            assessmentId: true,
+            problemId: true,
+            marks: true,
+            order: true,
+          },
+        });
+
+      // Recalculate total marks
+      const marksResult =
+        await tx.assessmentProblem.aggregate({
+          where: {
+            assessmentId:
+              assessmentProblem.assessmentId,
+          },
+          _sum: {
+            marks: true,
+          },
+        });
+
+      const totalMarks =
+        marksResult._sum.marks ?? 0;
+
+      // Update assessment total marks
+      await tx.assessment.update({
+        where: {
+          id: assessmentProblem.assessmentId,
+        },
+        data: {
+          totalMarks,
+        },
+      });
+
+      return deleted;
+    },
+  );
+
+  return result;
+};
+
+
+
+
 export const AssessmentProblemService = {
   createAssessmentProblem,
   getAssessmentProblems,
   getAssessmentProblemById,
   updateAssessmentProblem,
-//   deleteAssessmentProblem,
+deleteAssessmentProblem
 };

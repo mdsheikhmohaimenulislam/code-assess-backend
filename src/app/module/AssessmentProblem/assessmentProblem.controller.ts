@@ -119,31 +119,49 @@ const updateAssessmentProblem = catchAsync(
   },
 );
 
-// const deleteAssessmentProblem = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
-//     const userRole = req.user!.role;
 
-//     const result =
-//       await AssessmentProblemService.deleteAssessmentProblem(
-//         userId,
-//         userRole,
-//         req.params.id,
-//         req.params.id
-//       );
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Problem removed from assessment successfully",
-//       data: result,
-//     });
-//   }
-// );
+const deleteAssessmentProblem = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    const { id } = req.params;
+
+    if (!userId || !userRole) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
+
+    if (!id) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Assessment problem ID is required",
+      );
+    }
+
+
+      await AssessmentProblemService.deleteAssessmentProblem(
+        userId,
+        userRole,
+        id as string,
+      );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message:
+        "Problem removed from assessment successfully",
+      data: null,
+    });
+  },
+);
 
 export const AssessmentProblemController = {
   createAssessmentProblem,
   getAssessmentProblems,
   getAssessmentProblemById,
   updateAssessmentProblem,
-  //   deleteAssessmentProblem,
+    deleteAssessmentProblem,
 };

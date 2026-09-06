@@ -36,10 +36,10 @@ router.patch(
   AssessmentProblemController.updateAssessmentProblem,
 );
 
-// router.delete(
-//   "/:assessmentId/problems/:id",
-//   auth(Role.ADMIN, Role.COMPANY),
-//   AssessmentProblemController.deleteAssessmentProblem
-// );
+router.delete(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY),
+  AssessmentProblemController.deleteAssessmentProblem,
+);
 
 export const AssessmentProblemRoutes = router;
