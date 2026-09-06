@@ -22,11 +22,16 @@ router.get(
   AssessmentController.getAssessments,
 );
 
-// router.get(
-//   "/:id",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   AssessmentController.getAssessmentById,
-// );
+router.get(
+  "/:id",
+  auth(
+    Role.ADMIN,
+    Role.COMPANY,
+    Role.CANDIDATE,
+  ),
+  AssessmentController.getAssessmentById,
+);
+
 
 // router.patch(
 //   "/:id",

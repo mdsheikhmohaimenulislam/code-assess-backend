@@ -445,60 +445,112 @@ const getAssessments = async (
   };
 };
 
-/**
- * Get Single Assessment
- */
-// const getAssessmentById = async (
-//   assessmentId: string,
-// ) => {
-//   const assessment =
-//     await prisma.assessment.findUnique({
-//       where: {
-//         id: assessmentId,
-//       },
 
-//       include: {
-//         company: {
-//           select: {
-//             id: true,
-//             name: true,
-//           },
-//         },
+// Get Single Assessment
+const getAssessmentById = async (
+  assessmentId: string,
+) => {
+  if (!assessmentId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Assessment ID is required",
+    );
+  }
 
-//         createdBy: {
-//           select: {
-//             id: true,
-//             name: true,
-//             email: true,
-//           },
-//         },
+  const assessment =
+    await prisma.assessment.findUnique({
+      where: {
+        id: assessmentId,
+      },
 
-//         problems: {
-//           orderBy: {
-//             order: "asc",
-//           },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        duration: true,
+        startTime: true,
+        endTime: true,
+        totalMarks: true,
+        passingMarks: true,
+        accessType: true,
+        price: true,
+        status: true,
+        companyId: true,
+        createdById: true,
+        createdAt: true,
+        updatedAt: true,
 
-//           include: {
-//             problem: true,
-//           },
-//         },
+        // Company information
+        company: {
+          select: {
+            id: true,
+            companyName: true,
+            description: true,
+            website: true,
+            logo: true,
+          },
+        },
 
-//         _count: {
-//           select: {
-//             invitations: true,
-//             attempts: true,
-//             payments: true,
-//           },
-//         },
-//       },
-//     });
+        // Assessment creator information
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
 
-//   if (!assessment) {
-//     throw new Error("Assessment not found");
-//   }
+        // Assessment problems
+        problems: {
+          orderBy: {
+            order: "asc",
+          },
 
-//   return assessment;
-// };
+          select: {
+            id: true,
+            order: true,
+
+            problem: {
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                type: true,
+                difficulty: true,
+                category: true,
+                inputFormat: true,
+                outputFormat: true,
+                constraints: true,
+                timeLimit: true,
+                memoryLimit: true,
+              },
+            },
+          },
+        },
+
+        // Related data count
+        _count: {
+          select: {
+            problems: true,
+            invitations: true,
+            attempts: true,
+            payments: true,
+          },
+        },
+      },
+    });
+
+  if (!assessment) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Assessment not found",
+    );
+  }
+
+  return assessment;
+};
+
 
 /**
  * Update Assessment
@@ -878,7 +930,7 @@ const getAssessments = async (
 export const AssessmentService = {
   createAssessment,
   getAssessments,
-//   getAssessmentById,
+  getAssessmentById,
 //   updateAssessment,
 //   deleteAssessment,
 //   publishAssessment,

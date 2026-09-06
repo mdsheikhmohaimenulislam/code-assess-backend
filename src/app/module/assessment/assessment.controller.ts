@@ -48,19 +48,29 @@ const getAssessments = catchAsync(
   },
 );
 
-// const getAssessmentById = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const result = await AssessmentService.getAssessmentById(
-//       req.params.id,
-//     );
+const getAssessmentById = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Assessment retrieved successfully",
-//       data: result,
-//     });
-//   },
-// );
+    if (!id) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Assessment ID is required",
+      );
+    }
+
+    const result =
+      await AssessmentService.getAssessmentById(id as string);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message:
+        "Assessment retrieved successfully",
+      data: result,
+    });
+  },
+);
 
 // const updateAssessment = catchAsync(
 //   async (req: Request, res: Response) => {
@@ -161,7 +171,7 @@ const getAssessments = catchAsync(
 export const AssessmentController = {
   createAssessment,
   getAssessments,
-//   getAssessmentById,
+  getAssessmentById,
 //   updateAssessment,
 //   deleteAssessment,
 //   publishAssessment,
