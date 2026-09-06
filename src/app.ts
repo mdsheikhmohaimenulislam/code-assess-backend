@@ -17,6 +17,8 @@ import { problemRoute } from "./app/module/problems/problem.route.js";
 import { AssessmentRoutes } from "./app/module/assessment/assessment.route.js";
 import { CompanyRoutes } from "./app/module/company/company.route.js";
 import { AssessmentProblemRoutes } from "./app/module/AssessmentProblem/assessmentProblem.route.js";
+import { InvitationRoutes } from "./app/module/invitation/invitation.route.js";
+import { CandidateRoutes } from "./app/module/candidate/candidate.route.js";
 
 const app: Application = express();
 
@@ -41,6 +43,11 @@ app.use("/api/v1/problem", problemRoute);
 app.use("/api/v1/assessment", AssessmentRoutes);
 app.use("/api/v1/company", CompanyRoutes);
 app.use("/api/v1/assessment-problem",AssessmentProblemRoutes);
+app.use("/api/v1/invitations", InvitationRoutes);
+app.use("/api/v1/candidate", CandidateRoutes);
+
+
+
 
 // Basic route...
 app.get("/", async (req: Request, res: Response) => {
