@@ -30,20 +30,23 @@ const createAssessment = catchAsync(
   },
 );
 
-// const getAssessments = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const result = await AssessmentService.getAssessments(
-//       req.query,
-//     );
+const getAssessments = catchAsync(
+  async (req: Request, res: Response) => {
+    const result =
+      await AssessmentService.getAssessments(
+        req.query as Record<string, unknown>,
+      );
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Assessments retrieved successfully",
-//       data: result.data,
-//       meta: result.meta,
-//     });
-//   },
-// );
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message:
+        "Assessments retrieved successfully",
+      data: result.data,
+      meta: result.meta,
+    });
+  },
+);
 
 // const getAssessmentById = catchAsync(
 //   async (req: Request, res: Response) => {
@@ -157,7 +160,7 @@ const createAssessment = catchAsync(
 
 export const AssessmentController = {
   createAssessment,
-//   getAssessments,
+  getAssessments,
 //   getAssessmentById,
 //   updateAssessment,
 //   deleteAssessment,

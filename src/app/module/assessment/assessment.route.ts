@@ -16,11 +16,11 @@ router.post(
   AssessmentController.createAssessment,
 );
 
-// router.get(
-//   "/",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   AssessmentController.getAssessments,
-// );
+router.get(
+  "/",
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+  AssessmentController.getAssessments,
+);
 
 // router.get(
 //   "/:id",

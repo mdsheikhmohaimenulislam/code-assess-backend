@@ -1,7 +1,9 @@
-import { AssessmentAccessType, Role } from "../../../generated/prisma/enums.js";
+import type { Prisma } from "../../../generated/prisma/client.js";
+import { AssessmentAccessType, AssessmentStatus, Role } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import type { ICreateAssessmentPayload } from "./assessment.interface.js";
+import httpStatus from 'http-status';
 
 
 
@@ -224,196 +226,224 @@ const createAssessment = async (
   return assessment;
 };
 
-/**
- * Get All Assessments
- *
- * Supports:
- * ?page=1
- * ?limit=10
- * ?search=javascript
- * ?status=PUBLISHED
- * ?accessType=PAID
- * ?companyId=xxx
- * ?sortBy=createdAt
- * ?sortOrder=desc
- */
-// const getAssessments = async (query: Record<string, unknown>) => {
-//   const page = Math.max(Number(query.page) || 1, 1);
 
-//   const limit = Math.min(
-//     Math.max(Number(query.limit) || 10, 1),
-//     100,
-//   );
+//   Get All Assessments
+const getAssessments = async (
+  query: Record<string, unknown>,
+) => {
+  const page = Math.max(
+    Number(query.page) || 1,
+    1,
+  );
 
-//   const skip = (page - 1) * limit;
+  const limit = Math.min(
+    Math.max(Number(query.limit) || 10, 1),
+    100,
+  );
 
-//   const search =
-//     typeof query.search === "string"
-//       ? query.search.trim()
-//       : undefined;
+  const skip = (page - 1) * limit;
 
-//   const status =
-//     typeof query.status === "string"
-//       ? query.status
-//       : undefined;
+  const search =
+    typeof query.search === "string"
+      ? query.search.trim()
+      : undefined;
 
-//   const accessType =
-//     typeof query.accessType === "string"
-//       ? query.accessType
-//       : undefined;
+  const status =
+    typeof query.status === "string"
+      ? query.status.trim().toUpperCase()
+      : undefined;
 
-//   const companyId =
-//     typeof query.companyId === "string"
-//       ? query.companyId
-//       : undefined;
+  const accessType =
+    typeof query.accessType === "string"
+      ? query.accessType.trim().toUpperCase()
+      : undefined;
 
-//   const allowedSortFields = [
-//     "createdAt",
-//     "updatedAt",
-//     "title",
-//     "duration",
-//     "totalMarks",
-//     "passingMarks",
-//     "startTime",
-//   ] as const;
+  const companyId =
+    typeof query.companyId === "string"
+      ? query.companyId.trim()
+      : undefined;
 
-//   type SortField =
-//     (typeof allowedSortFields)[number];
+  // Validate status
+  if (
+    status &&
+    !Object.values(AssessmentStatus).includes(
+      status as AssessmentStatus,
+    )
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Invalid assessment status",
+    );
+  }
 
-//   const requestedSort =
-//     typeof query.sortBy === "string"
-//       ? query.sortBy
-//       : "createdAt";
+  // Validate access type
+  if (
+    accessType &&
+    !Object.values(AssessmentAccessType).includes(
+      accessType as AssessmentAccessType,
+    )
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Invalid assessment access type",
+    );
+  }
 
-//   const sortBy: SortField =
-//     allowedSortFields.includes(
-//       requestedSort as SortField,
-//     )
-//       ? (requestedSort as SortField)
-//       : "createdAt";
+  // Validate company ID
+  if (companyId) {
+    const company =
+      await prisma.companyProfile.findUnique({
+        where: {
+          id: companyId,
+        },
+        select: {
+          id: true,
+        },
+      });
 
-//   const sortOrder =
-//     query.sortOrder === "asc"
-//       ? "asc"
-//       : "desc";
+    if (!company) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        "Company not found",
+      );
+    }
+  }
 
-//   const where: Prisma.AssessmentWhereInput = {};
+  const where: Prisma.AssessmentWhereInput = {};
 
-//   // Search
-//   if (search) {
-//     where.OR = [
-//       {
-//         title: {
-//           contains: search,
-//           mode: "insensitive",
-//         },
-//       },
-//       {
-//         description: {
-//           contains: search,
-//           mode: "insensitive",
-//         },
-//       },
-//     ];
-//   }
+  // Search
+  if (search) {
+    where.OR = [
+      {
+        title: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        description: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+    ];
+  }
 
-//   // Status filter
-//   if (status) {
-//     if (
-//       Object.values(AssessmentStatus).includes(
-//         status as AssessmentStatus,
-//       )
-//     ) {
-//       where.status = status as AssessmentStatus;
-//     }
-//   }
+  // Filters
+  if (status) {
+    where.status = status as AssessmentStatus;
+  }
 
-//   // Access type filter
-//   if (accessType) {
-//     if (
-//       Object.values(AssessmentAccessType).includes(
-//         accessType as AssessmentAccessType,
-//       )
-//     ) {
-//       where.accessType =
-//         accessType as AssessmentAccessType;
-//     }
-//   }
+  if (accessType) {
+    where.accessType =
+      accessType as AssessmentAccessType;
+  }
 
-//   // Company filter
-//   if (companyId) {
-//     where.companyId = companyId;
-//   }
+  if (companyId) {
+    where.companyId = companyId;
+  }
 
-//   const [assessments, total] =
-//     await prisma.$transaction([
-//       prisma.assessment.findMany({
-//         where,
-//         skip,
-//         take: limit,
+  // Sorting
+  const allowedSortFields = [
+    "createdAt",
+    "updatedAt",
+    "title",
+    "duration",
+    "totalMarks",
+    "passingMarks",
+    "startTime",
+  ] as const;
 
-//         orderBy: {
-//           [sortBy]: sortOrder,
-//         },
+  type SortField =
+    (typeof allowedSortFields)[number];
 
-//         select: {
-//           id: true,
-//           title: true,
-//           description: true,
-//           duration: true,
-//           startTime: true,
-//           endTime: true,
-//           totalMarks: true,
-//           passingMarks: true,
-//           accessType: true,
-//           price: true,
-//           status: true,
-//           companyId: true,
-//           createdById: true,
-//           createdAt: true,
-//           updatedAt: true,
+  const requestedSort =
+    typeof query.sortBy === "string"
+      ? query.sortBy
+      : "createdAt";
 
-//           company: {
-//             select: {
-//               id: true,
-//               name: true,
-//             },
-//           },
+  const sortBy: SortField =
+    allowedSortFields.includes(
+      requestedSort as SortField,
+    )
+      ? (requestedSort as SortField)
+      : "createdAt";
 
-//           createdBy: {
-//             select: {
-//               id: true,
-//               name: true,
-//               email: true,
-//             },
-//           },
+  const sortOrder =
+    query.sortOrder === "asc"
+      ? "asc"
+      : "desc";
 
-//           _count: {
-//             select: {
-//               problems: true,
-//               invitations: true,
-//               attempts: true,
-//             },
-//           },
-//         },
-//       }),
+  const [assessments, total] =
+    await prisma.$transaction([
+      prisma.assessment.findMany({
+        where,
+        skip,
+        take: limit,
 
-//       prisma.assessment.count({
-//         where,
-//       }),
-//     ]);
+        orderBy: {
+          [sortBy]: sortOrder,
+        },
 
-//   return {
-//     meta: {
-//       page,
-//       limit,
-//       total,
-//       totalPages: Math.ceil(total / limit),
-//     },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          duration: true,
+          startTime: true,
+          endTime: true,
+          totalMarks: true,
+          passingMarks: true,
+          accessType: true,
+          price: true,
+          status: true,
+          companyId: true,
+          createdById: true,
+          createdAt: true,
+          updatedAt: true,
 
-//     data: assessments,
-//   };
-// };
+          company: {
+            select: {
+              id: true,
+              companyName: true,
+            },
+          },
+
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+
+          _count: {
+            select: {
+              problems: true,
+              invitations: true,
+              attempts: true,
+            },
+          },
+        },
+      }),
+
+      prisma.assessment.count({
+        where,
+      }),
+    ]);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(
+        total / limit,
+      ),
+    },
+    data: assessments,
+  };
+};
 
 /**
  * Get Single Assessment
@@ -847,7 +877,7 @@ const createAssessment = async (
 
 export const AssessmentService = {
   createAssessment,
-//   getAssessments,
+  getAssessments,
 //   getAssessmentById,
 //   updateAssessment,
 //   deleteAssessment,
