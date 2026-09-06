@@ -14,11 +14,11 @@ route.post(
   ProblemController.createProblem,
 );
 
-// route.get(
-//   "/",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   ProblemController.getProblems,
-// );
+route.get(
+  "/",
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+  ProblemController.getProblems,
+);
 
 // route.get(
 //   "/:id",

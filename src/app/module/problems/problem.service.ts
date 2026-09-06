@@ -1,7 +1,11 @@
+import type { Prisma } from "../../../generated/prisma/client.js";
 import { Difficulty } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
-import type { ICreateProblemPayload } from "./problem.interface.js";
+import type {
+  ICreateProblemPayload,
+  IGetProblemsQuery,
+} from "./problem.interface.js";
 
 const createProblem = async (
   userId: string,
@@ -41,137 +45,122 @@ const createProblem = async (
   return problem;
 };
 
-// const getProblems = async (query: any) => {
-//   const page = Number(query.page) || 1;
-//   const limit = Number(query.limit) || 10;
+const getProblems = async (query: IGetProblemsQuery) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
 
-//   const skip = (page - 1) * limit;
+  const skip = (page - 1) * limit;
 
-//   const search = query.search as string | undefined;
+  const title = query.title?.trim();
+  const search = query.search?.trim();
+  const category = query.category?.trim();
 
-//   const category = query.category as string | undefined;
+  const where: Prisma.ProblemWhereInput = {};
 
-//   const difficulty = query.difficulty as
-//     | "EASY"
-//     | "MEDIUM"
-//     | "HARD"
-//     | undefined;
+  // Search
+  if (search) {
+    where.OR = [
+      {
+        title: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        description: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        category: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+    ];
+  }
 
-//   const type = query.type as
-//     | "MCQ"
-//     | "CODING"
-//     | "WRITTEN"
-//     | undefined;
+  //   Title filter
+  if (title) {
+    where.title = {
+      contains: title,
+      mode: "insensitive",
+    };
+  }
+  // Category filter
+  if (category) {
+    where.category = {
+      equals: category,
+      mode: "insensitive",
+    };
+  }
 
-//   const sortBy = (query.sortBy || "createdAt") as
-//     | "createdAt"
-//     | "updatedAt"
-//     | "title"
-//     | "difficulty"
-//     | "category";
+  // Difficulty filter
+  if (query.difficulty) {
+    where.difficulty = query.difficulty;
+  }
 
-//   const sortOrder = (query.sortOrder || "desc") as
-//     | "asc"
-//     | "desc";
+  // Problem type filter
+  if (query.type) {
+    where.type = query.type;
+  }
 
-//   const where: Prisma.ProblemWhereInput = {
-//     deletedAt: null,
-//   };
+  const sortBy = query.sortBy ?? "createdAt";
+  const sortOrder = query.sortOrder ?? "desc";
 
-//   // Search
-//   if (search) {
-//     where.OR = [
-//       {
-//         title: {
-//           contains: search,
-//           mode: "insensitive",
-//         },
-//       },
-//       {
-//         description: {
-//           contains: search,
-//           mode: "insensitive",
-//         },
-//       },
-//       {
-//         category: {
-//           contains: search,
-//           mode: "insensitive",
-//         },
-//       },
-//     ];
-//   }
+  const [problems, total] = await prisma.$transaction([
+    prisma.problem.findMany({
+      where,
+      skip,
+      take: limit,
 
-//   // Category filter
-//   if (category) {
-//     where.category = {
-//       equals: category,
-//       mode: "insensitive",
-//     };
-//   }
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
 
-//   // Difficulty filter
-//   if (difficulty) {
-//     where.difficulty = difficulty;
-//   }
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        type: true,
+        difficulty: true,
+        category: true,
+        inputFormat: true,
+        outputFormat: true,
+        constraints: true,
+        timeLimit: true,
+        memoryLimit: true,
+        createdById: true,
+        createdAt: true,
+        updatedAt: true,
 
-//   // Problem type filter
-//   if (type) {
-//     where.type = type;
-//   }
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    }),
 
-//   const [problems, total] = await prisma.$transaction([
-//     prisma.problem.findMany({
-//       where,
-//       skip,
-//       take: limit,
+    prisma.problem.count({
+      where,
+    }),
+  ]);
 
-//       orderBy: {
-//         [sortBy]: sortOrder,
-//       },
-
-//       select: {
-//         id: true,
-//         title: true,
-//         description: true,
-//         type: true,
-//         difficulty: true,
-//         category: true,
-//         inputFormat: true,
-//         outputFormat: true,
-//         constraints: true,
-//         timeLimit: true,
-//         memoryLimit: true,
-//         createdById: true,
-//         createdAt: true,
-//         updatedAt: true,
-
-//         createdBy: {
-//           select: {
-//             id: true,
-//             name: true,
-//             email: true,
-//             role: true,
-//           },
-//         },
-//       },
-//     }),
-
-//     prisma.problem.count({
-//       where,
-//     }),
-//   ]);
-
-//   return {
-//     meta: {
-//       page,
-//       limit,
-//       total,
-//       totalPages: Math.ceil(total / limit),
-//     },
-//     data: problems,
-//   };
-// };
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: problems,
+  };
+};
 
 // const getProblemById = async (problemId: string) => {
 //   const problem = await prisma.problem.findFirst({
@@ -350,8 +339,8 @@ const createProblem = async (
 
 export const ProblemService = {
   createProblem,
-//   getProblems,
-//   getProblemById,
-//   updateProblem,
-//   deleteProblem,
+  getProblems,
+  //   getProblemById,
+  //   updateProblem,
+  //   deleteProblem,
 };

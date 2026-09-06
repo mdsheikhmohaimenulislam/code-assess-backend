@@ -12,3 +12,17 @@ export interface ICreateProblemPayload {
   timeLimit?: number;
   memoryLimit?: number;
 }
+
+
+
+export interface IGetProblemsQuery {
+  page?: string;
+  limit?: string;
+  search?: string;
+    title?: string;
+  category?: string;
+  difficulty?:Difficulty;
+  type?:ProblemType;
+  sortBy?: "createdAt" | "updatedAt" | "title" | "difficulty" | "category";
+  sortOrder?: "asc" | "desc";
+}

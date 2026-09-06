@@ -28,18 +28,19 @@ const createProblem = catchAsync(
   },
 );
 
-// const getProblems = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const result = await ProblemService.getProblems(req.query);
+const getProblems = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await ProblemService.getProblems(req.query);
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Problems retrieved successfully",
-//       data: result.data,
-//       meta: result.meta,
-//     });
-//   },
-// );
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Problems retrieved successfully",
+      data: result.data,
+      meta: result.meta,
+    });
+  },
+);
 
 // const getProblemById = catchAsync(
 //   async (req: Request, res: Response) => {
@@ -94,7 +95,7 @@ const createProblem = catchAsync(
 
 export const ProblemController = {
   createProblem,
-//   getProblems,
+  getProblems,
 //   getProblemById,
 //   updateProblem,
 //   deleteProblem,
