@@ -6,7 +6,7 @@ model Payment {
   amount   Decimal @db.Decimal(10, 2)
   currency String  @default("BDT")
 
-  status        PaymentStatus @default(UNPAID)
+  status        PaymentStatus @default(PENDING)
   paymentMethod PaymentMethod @default(BKASH)
 
   merchantInvoiceNumber String  @unique

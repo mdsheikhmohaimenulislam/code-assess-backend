@@ -13,6 +13,7 @@ import { globalErrorHandler } from "./app/middlewares/globalErrorHandler.js";
 import { notFound } from "./app/middlewares/notFound.js";
 import passport from "./app/utils/passport.js";
 import { userRoute } from "./app/module/user/user.route.js";
+import { problemRoute } from "./app/module/problems/problem.route.js";
 
 const app: Application = express();
 
@@ -33,6 +34,7 @@ app.use(passport.initialize());
 
 app.use("/api/v1/auth", AuthRoutes);
 app.use("/api/v1/users", userRoute);
+app.use("/api/v1/problem", problemRoute);
 
 
 // Basic route...

@@ -2,6 +2,7 @@ model Problem {
   id           String     @id @default(uuid())
   title        String
   description  String
+    type         ProblemType
   difficulty   Difficulty @default(EASY)
   category     String
   inputFormat  String?

@@ -2,11 +2,19 @@ model Assessment {
   id           String           @id @default(uuid())
   title        String
   description  String?
+
+
   duration     Int
   startTime    DateTime?
   endTime      DateTime?
+
+
   totalMarks   Float
   passingMarks Float
+
+  accessType   AssessmentAccessType @default(FREE)
+  price        Decimal?             @db.Decimal(10, 2)
+
   status       AssessmentStatus @default(DRAFT)
 
   companyId String
@@ -27,5 +35,6 @@ model Assessment {
   @@index([createdById])
   @@index([status])
   @@index([startTime])
+    @@index([accessType])
   @@map("assessments")
 }
