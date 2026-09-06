@@ -251,56 +251,60 @@ const updateCandidate = async (
   return updatedCandidate;
 };
 
-// const deleteCandidate = async (
-//   userId: string,
-//   candidateId: string
-// ) => {
-//   /**
-//    * Find candidate
-//    */
-//   const candidate =
-//     await prisma.candidateProfile.findUnique({
-//       where: {
-//         id: candidateId,
-//       },
-//     });
+const deleteCandidate = async (
+  userId: string,
+  candidateId: string,
+) => {
+  /**
+   * Find candidate profile
+   */
+  const candidate =
+    await prisma.candidateProfile.findUnique({
+      where: {
+        id: candidateId,
+      },
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
 
-//   if (!candidate) {
-//     throw new ApiError(
-//       404,
-//       "Candidate profile not found"
-//     );
-//   }
+  if (!candidate) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Candidate profile not found",
+    );
+  }
 
-//   /**
-//    * Ownership check
-//    */
-//   if (candidate.userId !== userId) {
-//     throw new ApiError(
-//       403,
-//       "You are not allowed to delete this profile"
-//     );
-//   }
+  /**
+   * Ownership check
+   */
+  if (candidate.userId !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to delete this profile",
+    );
+  }
 
-//   /**
-//    * Delete profile
-//    */
-//   await prisma.candidateProfile.delete({
-//     where: {
-//       id: candidateId,
-//     },
-//   });
+  /**
+   * Delete candidate profile
+   */
+  await prisma.candidateProfile.delete({
+    where: {
+      id: candidateId,
+    },
+  });
 
-//   return {
-//     id: candidateId,
-//     deleted: true,
-//   };
-// };
+  return {
+    id: candidateId,
+    deleted: true,
+  };
+};
 
 export const CandidateService = {
   createCandidate,
     getMyCandidate,
     getCandidateById,
     updateCandidate,
-  //   deleteCandidate,
+    deleteCandidate,
 };

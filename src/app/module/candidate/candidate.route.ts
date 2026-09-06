@@ -29,10 +29,10 @@ router.patch(
   CandidateController.updateCandidate
 );
 
-// router.delete(
-//   "/:id",
-//   auth(Role.CANDIDATE),
-//   CandidateController.deleteCandidate
-// );
+router.delete(
+  "/:id",
+  auth(Role.CANDIDATE),
+  CandidateController.deleteCandidate,
+);
 
 export const CandidateRoutes = router;
