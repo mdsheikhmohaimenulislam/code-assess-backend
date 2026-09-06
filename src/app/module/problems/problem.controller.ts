@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import { response, type Request, type Response } from "express";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { ProblemService } from "./problem.service.js";
 import { AppError } from "../../utils/AppError.js";
@@ -47,24 +47,30 @@ const getProblemById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const updateProblem = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user?.userId;
-//     const { id } = req.params;
+const updateProblem = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const userRole = req.user?.role;
 
-//     const result = await ProblemService.updateProblem(
-//       userId,
-//       id,
-//       req.body,
-//     );
+  const { id } = req.params;
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Problem updated successfully",
-//       data: result,
-//     });
-//   },
-// );
+  if (!userId || !userRole) {
+    throw new AppError(401, "Unauthorized");
+  }
+
+  const result = await ProblemService.updateProblem(
+    userId,
+    userRole,
+    id as string,
+    req.body,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Problem updated successfully",
+    data: result,
+  });
+});
 
 // const deleteProblem = catchAsync(
 //   async (req: Request, res: Response) => {
@@ -88,6 +94,6 @@ export const ProblemController = {
   createProblem,
   getProblems,
   getProblemById,
-  //   updateProblem,
+  updateProblem,
   //   deleteProblem,
 };

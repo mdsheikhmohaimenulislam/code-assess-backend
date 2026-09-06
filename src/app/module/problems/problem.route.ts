@@ -26,12 +26,12 @@ route.get(
   ProblemController.getProblemById,
 );
 
-// route.patch(
-//   "/:id",
-//   auth(Role.ADMIN, Role.COMPANY),
+route.patch(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY),
 //   validateRequest(updateProblemValidationSchema),
-//   ProblemController.updateProblem,
-// );
+  ProblemController.updateProblem,
+);
 
 // route.delete(
 //   "/:id",

@@ -1,10 +1,11 @@
 import type { Prisma } from "../../../generated/prisma/client.js";
-import { Difficulty } from "../../../generated/prisma/enums.js";
+import { Difficulty, Role } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import type {
   ICreateProblemPayload,
   IGetProblemsQuery,
+  IUpdateProblemPayload,
 } from "./problem.interface.js";
 
 const createProblem = async (
@@ -202,94 +203,134 @@ const getProblemById = async (problemId: string) => {
   return problem;
 };
 
-// const updateProblem = async (
-//   userId: string,
-//   userRole: Role,
-//   problemId: string,
-//   payload: {
-//     title?: string;
-//     description?: string;
-//     type?: ProblemType;
-//     difficulty?: Difficulty;
-//     category?: string;
-//     inputFormat?: string;
-//     outputFormat?: string;
-//     constraints?: string;
-//     timeLimit?: number;
-//     memoryLimit?: number;
-//   },
-// ) => {
-//   const existingProblem = await prisma.problem.findFirst({
-//     where: {
-//       id: problemId,
-//       deletedAt: null,
-//     },
-//   });
+const updateProblem = async (
+  userId: string,
+  userRole: Role,
+  problemId: string,
+  payload: IUpdateProblemPayload,
+) => {
+  // 1. Validate authenticated user
+  if (!userId || !userRole) {
+    throw new AppError(
+      401,
+      "Unauthorized user",
+    );
+  }
 
-//   if (!existingProblem) {
-//     throw new Error("Problem not found");
-//   }
+  // 2. Validate problem ID
+  if (!problemId) {
+    throw new AppError(
+      400,
+      "Problem ID is required",
+    );
+  }
 
-//   // COMPANY can update only own problem
-//   if (
-//     userRole === Role.COMPANY &&
-//     existingProblem.createdById !== userId
-//   ) {
-//     throw new Error(
-//       "You can only update your own problem",
-//     );
-//   }
+  // 3. Validate update payload
+  if (Object.keys(payload).length === 0) {
+    throw new AppError(
+      400,
+      "At least one field is required to update the problem",
+    );
+  }
 
-//   const updatedProblem = await prisma.problem.update({
-//     where: {
-//       id: problemId,
-//     },
+  // 4. Check whether the problem exists
+  const existingProblem = await prisma.problem.findUnique({
+    where: {
+      id: problemId,
+    },
 
-//     data: {
-//       ...(payload.title !== undefined && {
-//         title: payload.title,
-//       }),
+    select: {
+      id: true,
+      createdById: true,
+    },
+  });
 
-//       ...(payload.description !== undefined && {
-//         description: payload.description,
-//       }),
+  if (!existingProblem) {
+    throw new AppError(
+      404,
+      "Problem not found",
+    );
+  }
 
-//       ...(payload.type !== undefined && {
-//         type: payload.type,
-//       }),
+  // 5. COMPANY can update only their own problem
+  if (
+    userRole === Role.COMPANY &&
+    existingProblem.createdById !== userId
+  ) {
+    throw new AppError(
+      403,
+      "You can only update your own problem",
+    );
+  }
 
-//       ...(payload.difficulty !== undefined && {
-//         difficulty: payload.difficulty,
-//       }),
+  // 6. Update problem
+  const updatedProblem = await prisma.problem.update({
+    where: {
+      id: problemId,
+    },
 
-//       ...(payload.category !== undefined && {
-//         category: payload.category,
-//       }),
+    data: {
+      ...(payload.title !== undefined && {
+        title: payload.title,
+      }),
 
-//       ...(payload.inputFormat !== undefined && {
-//         inputFormat: payload.inputFormat,
-//       }),
+      ...(payload.description !== undefined && {
+        description: payload.description,
+      }),
 
-//       ...(payload.outputFormat !== undefined && {
-//         outputFormat: payload.outputFormat,
-//       }),
+      ...(payload.type !== undefined && {
+        type: payload.type,
+      }),
 
-//       ...(payload.constraints !== undefined && {
-//         constraints: payload.constraints,
-//       }),
+      ...(payload.difficulty !== undefined && {
+        difficulty: payload.difficulty,
+      }),
 
-//       ...(payload.timeLimit !== undefined && {
-//         timeLimit: payload.timeLimit,
-//       }),
+      ...(payload.category !== undefined && {
+        category: payload.category,
+      }),
 
-//       ...(payload.memoryLimit !== undefined && {
-//         memoryLimit: payload.memoryLimit,
-//       }),
-//     },
-//   });
+      ...(payload.inputFormat !== undefined && {
+        inputFormat: payload.inputFormat,
+      }),
 
-//   return updatedProblem;
-// };
+      ...(payload.outputFormat !== undefined && {
+        outputFormat: payload.outputFormat,
+      }),
+
+      ...(payload.constraints !== undefined && {
+        constraints: payload.constraints,
+      }),
+
+      ...(payload.timeLimit !== undefined && {
+        timeLimit: payload.timeLimit,
+      }),
+
+      ...(payload.memoryLimit !== undefined && {
+        memoryLimit: payload.memoryLimit,
+      }),
+    },
+
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      type: true,
+      difficulty: true,
+      category: true,
+      inputFormat: true,
+      outputFormat: true,
+      constraints: true,
+      timeLimit: true,
+      memoryLimit: true,
+      createdById: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return updatedProblem;
+};
 
 // const deleteProblem = async (
 //   userId: string,
@@ -340,6 +381,6 @@ export const ProblemService = {
   createProblem,
   getProblems,
   getProblemById,
-  //   updateProblem,
+    updateProblem,
   //   deleteProblem,
 };

@@ -26,3 +26,17 @@ export interface IGetProblemsQuery {
   sortBy?: "createdAt" | "updatedAt" | "title" | "difficulty" | "category";
   sortOrder?: "asc" | "desc";
 }
+
+
+export interface IUpdateProblemPayload {
+  title?: string;
+  description?: string;
+  type?: ProblemType;
+  difficulty?: Difficulty;
+  category?: string;
+  inputFormat?: string;
+  outputFormat?: string;
+  constraints?: string;
+  timeLimit?: number;
+  memoryLimit?: number;
+}
