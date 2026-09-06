@@ -252,43 +252,60 @@ const getAssessmentProblems = async (
   return result;
 };
 
-// /**
-//  * Get single AssessmentProblem
-//  */
-// const getAssessmentProblemById = async (
-//   assessmentId: string,
-//   id: string
-// ) => {
-//   const result = await prisma.assessmentProblem.findFirst({
-//     where: {
-//       id,
-//       assessmentId,
-//     },
-//     include: {
-//       assessment: {
-//         select: {
-//           id: true,
-//           title: true,
-//           status: true,
-//         },
-//       },
-//       problem: true,
-//     },
-//   });
 
-//   if (!result) {
-//     throw new ApiError(
-//       404,
-//       "Assessment problem not found"
-//     );
-//   }
+const getAssessmentProblemById = async (
+  id: string,
+) => {
+  const result =
+    await prisma.assessmentProblem.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        assessmentId: true,
+        problemId: true,
+        marks: true,
+        order: true,
+        createdAt: true,
 
-//   return result;
-// };
+        assessment: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+          },
+        },
 
-// /**
-//  * Update AssessmentProblem
-//  */
+        problem: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            type: true,
+            difficulty: true,
+            category: true,
+            inputFormat: true,
+            outputFormat: true,
+            constraints: true,
+            timeLimit: true,
+            memoryLimit: true,
+          },
+        },
+      },
+    });
+
+  if (!result) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Assessment problem not found",
+    );
+  }
+
+  return result;
+};
+
+
 // const updateAssessmentProblem = async (
 //   userId: string,
 //   userRole: Role,
@@ -492,7 +509,7 @@ const getAssessmentProblems = async (
 export const AssessmentProblemService = {
   createAssessmentProblem,
   getAssessmentProblems,
-//   getAssessmentProblemById,
+  getAssessmentProblemById,
 //   updateAssessmentProblem,
 //   deleteAssessmentProblem,
 };

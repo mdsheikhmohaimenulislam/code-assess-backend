@@ -40,7 +40,7 @@ const createAssessmentProblem = catchAsync(
 const getAssessmentProblems = catchAsync(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    console.log(id);
+    // console.log(id);
 
     if (!id) {
       throw new AppError(httpStatus.BAD_REQUEST, "Assessment ID is required");
@@ -59,25 +59,33 @@ const getAssessmentProblems = catchAsync(
   },
 );
 
-// const getAssessmentProblemById = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const result =
-//       await AssessmentProblemService.getAssessmentProblemById(
-//         req.params.id,
-//         req.params.id
-//       );
+const getAssessmentProblemById = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Assessment problem retrieved successfully",
-//       data: result,
-//     });
-//   }
-// );
+console.log(req.params);
 
-// /**
-//  * Update AssessmentProblem
-//  */
+    if (!id) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Assessment problem ID is required",
+      );
+    }
+
+    const result =
+      await AssessmentProblemService.getAssessmentProblemById(id as string);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message:
+        "Assessment problem retrieved successfully",
+      data: result,
+    });
+  },
+);
+
+
 // const updateAssessmentProblem = catchAsync(
 //   async (req: Request, res: Response) => {
 //     const userId = req.user!.userId;
@@ -127,7 +135,7 @@ const getAssessmentProblems = catchAsync(
 export const AssessmentProblemController = {
   createAssessmentProblem,
   getAssessmentProblems,
-  //   getAssessmentProblemById,
+getAssessmentProblemById
   //   updateAssessmentProblem,
   //   deleteAssessmentProblem,
 };

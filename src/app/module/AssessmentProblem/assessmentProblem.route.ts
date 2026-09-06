@@ -21,12 +21,11 @@ router.get(
   AssessmentProblemController.getAssessmentProblems
 );
 
-// router.get(
-//   "/:assessmentId/problems/:id",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   AssessmentProblemController.getAssessmentProblemById
-// );
-
+router.get(
+  "/assessment-problem/:id",
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+  AssessmentProblemController.getAssessmentProblemById,
+);
 // router.patch(
 //   "/:assessmentId/problems/:id",
 //   auth(Role.ADMIN, Role.COMPANY),
