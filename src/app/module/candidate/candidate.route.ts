@@ -16,11 +16,11 @@ router.post(
 );
 
 
-// router.get(
-//   "/me",
-//   auth(Role.CANDIDATE),
-//   CandidateController.getMyCandidate
-// );
+router.get(
+  "/me",
+  auth(Role.CANDIDATE),
+  CandidateController.getMyCandidate
+);
 
 
 // router.get(

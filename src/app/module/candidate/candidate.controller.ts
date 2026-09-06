@@ -35,21 +35,27 @@ const createCandidate = catchAsync(
 );
 
 
-// const getMyCandidate = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
+const getMyCandidate = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
 
-//     const result = await CandidateService.getMyCandidate(
-//       userId
-//     );
+    if (!userId) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Candidate profile retrieved successfully",
-//       data: result,
-//     });
-//   }
-// );
+    const result =
+      await CandidateService.getMyCandidate(userId);
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: "Candidate profile retrieved successfully",
+      data: result,
+    });
+  },
+);
 
 
 // const getCandidateById = catchAsync(
@@ -105,7 +111,7 @@ const createCandidate = catchAsync(
 
 export const CandidateController = {
   createCandidate,
-//   getMyCandidate,
+  getMyCandidate,
 //   getCandidateById,
 //   updateCandidate,
 //   deleteCandidate,
