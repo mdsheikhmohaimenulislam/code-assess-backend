@@ -162,46 +162,45 @@ const getProblems = async (query: IGetProblemsQuery) => {
   };
 };
 
-// const getProblemById = async (problemId: string) => {
-//   const problem = await prisma.problem.findFirst({
-//     where: {
-//       id: problemId,
-//       deletedAt: null,
-//     },
+const getProblemById = async (problemId: string) => {
+  const problem = await prisma.problem.findFirst({
+    where: {
+      id: problemId,
+    },
 
-//     select: {
-//       id: true,
-//       title: true,
-//       description: true,
-//       type: true,
-//       difficulty: true,
-//       category: true,
-//       inputFormat: true,
-//       outputFormat: true,
-//       constraints: true,
-//       timeLimit: true,
-//       memoryLimit: true,
-//       createdById: true,
-//       createdAt: true,
-//       updatedAt: true,
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      type: true,
+      difficulty: true,
+      category: true,
+      inputFormat: true,
+      outputFormat: true,
+      constraints: true,
+      timeLimit: true,
+      memoryLimit: true,
+      createdById: true,
+      createdAt: true,
+      updatedAt: true,
 
-//       createdBy: {
-//         select: {
-//           id: true,
-//           name: true,
-//           email: true,
-//           role: true,
-//         },
-//       },
-//     },
-//   });
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
+    },
+  });
 
-//   if (!problem) {
-//     throw new Error("Problem not found");
-//   }
+  if (!problem) {
+    throw new AppError(404, "Problem not found");
+  }
 
-//   return problem;
-// };
+  return problem;
+};
 
 // const updateProblem = async (
 //   userId: string,
@@ -340,7 +339,7 @@ const getProblems = async (query: IGetProblemsQuery) => {
 export const ProblemService = {
   createProblem,
   getProblems,
-  //   getProblemById,
+  getProblemById,
   //   updateProblem,
   //   deleteProblem,
 };

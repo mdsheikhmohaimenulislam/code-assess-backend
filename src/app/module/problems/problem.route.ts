@@ -20,11 +20,11 @@ route.get(
   ProblemController.getProblems,
 );
 
-// route.get(
-//   "/:id",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   ProblemController.getProblemById,
-// );
+route.get(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+  ProblemController.getProblemById,
+);
 
 // route.patch(
 //   "/:id",
