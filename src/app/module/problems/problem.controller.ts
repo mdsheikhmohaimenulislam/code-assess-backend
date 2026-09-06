@@ -4,6 +4,8 @@ import { ProblemService } from "./problem.service.js";
 import { AppError } from "../../utils/AppError.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import httpStatus from "http-status";
+import { Role } from "../../../generated/prisma/enums.js";
+import { prisma } from "../../lib/prisma.js";
 
 const createProblem = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
@@ -72,28 +74,33 @@ const updateProblem = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const deleteProblem = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user?.userId;
-//     const { id } = req.params;
+const deleteProblem = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const userRole = req.user?.role;
+  const { id: problemId } = req.params;
 
-//     const result = await ProblemService.deleteProblem(
-//       userId,
-//       id,
-//     );
+  if (!userId || !userRole) {
+    throw new AppError(401, "Unauthorized");
+  }
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Problem deleted successfully",
-//       data: result,
-//     });
-//   },
-// );
+  if (!problemId) {
+    throw new AppError(400, "Problem ID is required");
+  }
+
+  await ProblemService.deleteProblem(userId, userRole, problemId as string);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Problem permanently deleted successfully",
+    data: null,
+  });
+});
 
 export const ProblemController = {
   createProblem,
   getProblems,
   getProblemById,
   updateProblem,
-  //   deleteProblem,
+  deleteProblem,
 };

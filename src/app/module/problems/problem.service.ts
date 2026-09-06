@@ -211,18 +211,12 @@ const updateProblem = async (
 ) => {
   // 1. Validate authenticated user
   if (!userId || !userRole) {
-    throw new AppError(
-      401,
-      "Unauthorized user",
-    );
+    throw new AppError(401, "Unauthorized user");
   }
 
   // 2. Validate problem ID
   if (!problemId) {
-    throw new AppError(
-      400,
-      "Problem ID is required",
-    );
+    throw new AppError(400, "Problem ID is required");
   }
 
   // 3. Validate update payload
@@ -246,21 +240,12 @@ const updateProblem = async (
   });
 
   if (!existingProblem) {
-    throw new AppError(
-      404,
-      "Problem not found",
-    );
+    throw new AppError(404, "Problem not found");
   }
 
   // 5. COMPANY can update only their own problem
-  if (
-    userRole === Role.COMPANY &&
-    existingProblem.createdById !== userId
-  ) {
-    throw new AppError(
-      403,
-      "You can only update your own problem",
-    );
+  if (userRole === Role.COMPANY && existingProblem.createdById !== userId) {
+    throw new AppError(403, "You can only update your own problem");
   }
 
   // 6. Update problem
@@ -269,47 +254,7 @@ const updateProblem = async (
       id: problemId,
     },
 
-    data: {
-      ...(payload.title !== undefined && {
-        title: payload.title,
-      }),
-
-      ...(payload.description !== undefined && {
-        description: payload.description,
-      }),
-
-      ...(payload.type !== undefined && {
-        type: payload.type,
-      }),
-
-      ...(payload.difficulty !== undefined && {
-        difficulty: payload.difficulty,
-      }),
-
-      ...(payload.category !== undefined && {
-        category: payload.category,
-      }),
-
-      ...(payload.inputFormat !== undefined && {
-        inputFormat: payload.inputFormat,
-      }),
-
-      ...(payload.outputFormat !== undefined && {
-        outputFormat: payload.outputFormat,
-      }),
-
-      ...(payload.constraints !== undefined && {
-        constraints: payload.constraints,
-      }),
-
-      ...(payload.timeLimit !== undefined && {
-        timeLimit: payload.timeLimit,
-      }),
-
-      ...(payload.memoryLimit !== undefined && {
-        memoryLimit: payload.memoryLimit,
-      }),
-    },
+    data: payload,
 
     select: {
       id: true,
@@ -332,55 +277,47 @@ const updateProblem = async (
   return updatedProblem;
 };
 
-// const deleteProblem = async (
-//   userId: string,
-//   userRole: Role,
-//   problemId: string,
-// ) => {
-//   const existingProblem = await prisma.problem.findFirst({
-//     where: {
-//       id: problemId,
-//       deletedAt: null,
-//     },
-//   });
+const deleteProblem = async (
+  userId: string,
+  userRole: Role,
+  problemId: string,
+) => {
+  const existingProblem = await prisma.problem.findUnique({
+    where: {
+      id: problemId,
+    },
+    select: {
+      id: true,
+      createdById: true,
+    },
+  });
 
-//   if (!existingProblem) {
-//     throw new Error("Problem not found");
-//   }
+  if (!existingProblem) {
+    throw new AppError(404, "Problem not found");
+  }
 
-//   // COMPANY can delete only own problem
-//   if (
-//     userRole === Role.COMPANY &&
-//     existingProblem.createdById !== userId
-//   ) {
-//     throw new Error(
-//       "You can only delete your own problem",
-//     );
-//   }
+  // COMPANY can delete only own problem
+  if (
+    userRole === Role.COMPANY &&
+    existingProblem.createdById !== userId
+  ) {
+    throw new AppError(
+      403,
+      "You can only delete your own problem",
+    );
+  }
 
-//   const deletedProblem = await prisma.problem.update({
-//     where: {
-//       id: problemId,
-//     },
-
-//     data: {
-//       deletedAt: new Date(),
-//     },
-
-//     select: {
-//       id: true,
-//       title: true,
-//       deletedAt: true,
-//     },
-//   });
-
-//   return deletedProblem;
-// };
+  await prisma.problem.delete({
+    where: {
+      id: problemId,
+    },
+  });
+};
 
 export const ProblemService = {
   createProblem,
   getProblems,
   getProblemById,
-    updateProblem,
-  //   deleteProblem,
+  updateProblem,
+  deleteProblem,
 };

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { auth } from "../../middlewares/checkAuth.js";
 import { Role } from "../../../generated/prisma/enums.js";
 import { validateRequest } from "../../middlewares/validateRequst.js";
-import { createProblemValidationSchema } from "./problem.validation.js";
+import { createProblemValidationSchema, updateProblemValidationSchema } from "./problem.validation.js";
 import { ProblemController } from "./problem.controller.js";
 
 const route = Router();
@@ -29,14 +29,14 @@ route.get(
 route.patch(
   "/:id",
   auth(Role.ADMIN, Role.COMPANY),
-//   validateRequest(updateProblemValidationSchema),
+  validateRequest(updateProblemValidationSchema),
   ProblemController.updateProblem,
 );
 
-// route.delete(
-//   "/:id",
-//   auth(Role.ADMIN, Role.COMPANY),
-//   ProblemController.deleteProblem,
-// );
+route.delete(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY),
+  ProblemController.deleteProblem
+);
 
 export const problemRoute = route;
