@@ -27,8 +27,10 @@ export const updateAssessmentProblemValidationSchema = z
       .optional(),
   })
   .refine(
-    (data) => data.marks !== undefined || data.order !== undefined,
+    (data) =>
+      data.marks !== undefined ||
+      data.order !== undefined,
     {
       message: "At least one field is required",
-    }
+    },
   );

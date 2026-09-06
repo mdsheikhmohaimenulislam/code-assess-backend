@@ -1,7 +1,7 @@
 import { AssessmentStatus, Role } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
-import type { CreateAssessmentProblemPayload } from "./assessmentProblem.interface.js";
+import type { CreateAssessmentProblemPayload, UpdateAssessmentProblemPayload } from "./assessmentProblem.interface.js";
 import httpStatus from 'http-status';
 
 
@@ -306,210 +306,196 @@ const getAssessmentProblemById = async (
 };
 
 
-// const updateAssessmentProblem = async (
-//   userId: string,
-//   userRole: Role,
-//   assessmentId: string,
-//   id: string,
-//   payload: UpdateAssessmentProblemPayload
-// ) => {
-//   const { marks, order } = payload;
+const updateAssessmentProblem = async (
+  userId: string,
+  userRole: Role,
+  id: string,
+  payload: UpdateAssessmentProblemPayload,
+) => {
+  const { marks, order } = payload;
 
-//   /**
-//    * Check assessment + ownership
-//    */
-//   const assessment = await checkAssessmentOwnership(
-//     assessmentId,
-//     userId,
-//     userRole
-//   );
+  // Check authentication
+  if (!userId) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      "Unauthorized",
+    );
+  }
 
-//   /**
-//    * Assessment must be DRAFT
-//    */
-//   if (assessment.status !== "DRAFT") {
-//     throw new ApiError(
-//       400,
-//       "Problems can only be updated in a draft assessment"
-//     );
-//   }
+  // Check assessment problem ID
+  if (!id) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Assessment problem ID is required",
+    );
+  }
 
-//   /**
-//    * Find AssessmentProblem
-//    */
-//   const assessmentProblem =
-//     await prisma.assessmentProblem.findFirst({
-//       where: {
-//         id,
-//         assessmentId,
-//       },
-//     });
+  // Find assessment problem
+  const assessmentProblem =
+    await prisma.assessmentProblem.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        assessmentId: true,
+        problemId: true,
+        marks: true,
+        order: true,
 
-//   if (!assessmentProblem) {
-//     throw new ApiError(
-//       404,
-//       "Assessment problem not found"
-//     );
-//   }
+        assessment: {
+          select: {
+            id: true,
+            status: true,
+            createdById: true,
 
-//   /**
-//    * Check duplicate order
-//    */
-//   if (
-//     order !== undefined &&
-//     order !== assessmentProblem.order
-//   ) {
-//     const existingOrder =
-//       await prisma.assessmentProblem.findUnique({
-//         where: {
-//           assessmentId_order: {
-//             assessmentId,
-//             order,
-//           },
-//         },
-//       });
+            company: {
+              select: {
+                userId: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
-//     if (existingOrder) {
-//       throw new ApiError(
-//         409,
-//         `Order ${order} is already used in this assessment`
-//       );
-//     }
-//   }
+  if (!assessmentProblem) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Assessment problem not found",
+    );
+  }
 
-//   /**
-//    * Update + recalculate total marks
-//    */
-//   const result = await prisma.$transaction(async (tx) => {
-//     const updated =
-//       await tx.assessmentProblem.update({
-//         where: {
-//           id,
-//         },
-//         data: {
-//           ...(marks !== undefined && { marks }),
-//           ...(order !== undefined && { order }),
-//         },
-//         include: {
-//           problem: true,
-//         },
-//       });
+  const assessment = assessmentProblem.assessment;
 
-//     /**
-//      * Recalculate total marks
-//      */
-//     const totalMarks = await tx.assessmentProblem.aggregate({
-//       where: {
-//         assessmentId,
-//       },
-//       _sum: {
-//         marks: true,
-//       },
-//     });
+  // Check ownership
+  if (
+    userRole === Role.COMPANY &&
+    assessment.company.userId !== userId
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to manage this assessment",
+    );
+  }
 
-//     await tx.assessment.update({
-//       where: {
-//         id: assessmentId,
-//       },
-//       data: {
-//         totalMarks: totalMarks._sum.marks ?? 0,
-//       },
-//     });
+  // Only draft assessment can be updated
+  if (
+    assessment.status !== AssessmentStatus.DRAFT
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Problems can only be updated in a draft assessment",
+    );
+  }
 
-//     return updated;
-//   });
+  // Check duplicate order
+  if (
+    order !== undefined &&
+    order !== assessmentProblem.order
+  ) {
+    const existingOrder =
+      await prisma.assessmentProblem.findUnique({
+        where: {
+          assessmentId_order: {
+            assessmentId: assessmentProblem.assessmentId,
+            order,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
 
-//   return result;
-// };
+    if (
+      existingOrder &&
+      existingOrder.id !== assessmentProblem.id
+    ) {
+      throw new AppError(
+        httpStatus.CONFLICT,
+        `Order ${order} is already used in this assessment`,
+      );
+    }
+  }
 
-// /**
-//  * Delete AssessmentProblem
-//  */
-// const deleteAssessmentProblem = async (
-//   userId: string,
-//   userRole: Role,
-//   assessmentId: string,
-//   id: string
-// ) => {
-//   /**
-//    * Check assessment + ownership
-//    */
-//   const assessment = await checkAssessmentOwnership(
-//     assessmentId,
-//     userId,
-//     userRole
-//   );
+  // Update + recalculate total marks
+  const result = await prisma.$transaction(
+    async (tx) => {
+      const updated =
+        await tx.assessmentProblem.update({
+          where: {
+            id: assessmentProblem.id,
+          },
 
-//   /**
-//    * Assessment must be DRAFT
-//    */
-//   if (assessment.status !== "DRAFT") {
-//     throw new ApiError(
-//       400,
-//       "Problems can only be removed from a draft assessment"
-//     );
-//   }
+          data: {
+            ...(marks !== undefined && {
+              marks,
+            }),
 
-//   /**
-//    * Find AssessmentProblem
-//    */
-//   const assessmentProblem =
-//     await prisma.assessmentProblem.findFirst({
-//       where: {
-//         id,
-//         assessmentId,
-//       },
-//     });
+            ...(order !== undefined && {
+              order,
+            }),
+          },
 
-//   if (!assessmentProblem) {
-//     throw new ApiError(
-//       404,
-//       "Assessment problem not found"
-//     );
-//   }
+          select: {
+            id: true,
+            assessmentId: true,
+            problemId: true,
+            marks: true,
+            order: true,
+            createdAt: true,
 
-//   /**
-//    * Delete + recalculate marks
-//    */
-//   const result = await prisma.$transaction(async (tx) => {
-//     await tx.assessmentProblem.delete({
-//       where: {
-//         id,
-//       },
-//     });
+            problem: {
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                type: true,
+                difficulty: true,
+                category: true,
+              },
+            },
+          },
+        });
 
-//     const totalMarks = await tx.assessmentProblem.aggregate({
-//       where: {
-//         assessmentId,
-//       },
-//       _sum: {
-//         marks: true,
-//       },
-//     });
+      // Recalculate total marks
+      const marksResult =
+        await tx.assessmentProblem.aggregate({
+          where: {
+            assessmentId:
+              assessmentProblem.assessmentId,
+          },
 
-//     await tx.assessment.update({
-//       where: {
-//         id: assessmentId,
-//       },
-//       data: {
-//         totalMarks: totalMarks._sum.marks ?? 0,
-//       },
-//     });
+          _sum: {
+            marks: true,
+          },
+        });
 
-//     return {
-//       id,
-//       assessmentId,
-//       deleted: true,
-//     };
-//   });
+      const totalMarks =
+        marksResult._sum.marks ?? 0;
 
-//   return result;
-// };
+      await tx.assessment.update({
+        where: {
+          id: assessmentProblem.assessmentId,
+        },
+
+        data: {
+          totalMarks,
+        },
+      });
+
+      return updated;
+    },
+  );
+
+  return result;
+};
+
 
 export const AssessmentProblemService = {
   createAssessmentProblem,
   getAssessmentProblems,
   getAssessmentProblemById,
-//   updateAssessmentProblem,
+  updateAssessmentProblem,
 //   deleteAssessmentProblem,
 };

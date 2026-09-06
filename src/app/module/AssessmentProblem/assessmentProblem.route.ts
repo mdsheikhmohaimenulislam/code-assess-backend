@@ -2,7 +2,10 @@ import { Router } from "express";
 
 import { Role } from "../../../generated/prisma/enums.js";
 import { validateRequest } from "../../middlewares/validateRequst.js";
-import { createAssessmentProblemValidationSchema } from "./assessmentProblem.validation.js";
+import {
+  createAssessmentProblemValidationSchema,
+  updateAssessmentProblemValidationSchema,
+} from "./assessmentProblem.validation.js";
 import { AssessmentProblemController } from "./assessmentProblem.controller.js";
 import { auth } from "../../middlewares/checkAuth.js";
 
@@ -18,7 +21,7 @@ router.post(
 router.get(
   "/:id",
   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-  AssessmentProblemController.getAssessmentProblems
+  AssessmentProblemController.getAssessmentProblems,
 );
 
 router.get(
@@ -26,12 +29,12 @@ router.get(
   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
   AssessmentProblemController.getAssessmentProblemById,
 );
-// router.patch(
-//   "/:assessmentId/problems/:id",
-//   auth(Role.ADMIN, Role.COMPANY),
-//   validateRequest(updateAssessmentProblemValidationSchema),
-//   AssessmentProblemController.updateAssessmentProblem
-// );
+router.patch(
+  "/assessment-problem/:id",
+  auth(Role.ADMIN, Role.COMPANY),
+  validateRequest(updateAssessmentProblemValidationSchema),
+  AssessmentProblemController.updateAssessmentProblem,
+);
 
 // router.delete(
 //   "/:assessmentId/problems/:id",

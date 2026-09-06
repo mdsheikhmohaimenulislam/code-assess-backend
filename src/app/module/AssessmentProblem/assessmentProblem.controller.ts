@@ -63,7 +63,7 @@ const getAssessmentProblemById = catchAsync(
   async (req: Request, res: Response) => {
     const { id } = req.params;
 
-console.log(req.params);
+    console.log(req.params);
 
     if (!id) {
       throw new AppError(
@@ -72,45 +72,53 @@ console.log(req.params);
       );
     }
 
-    const result =
-      await AssessmentProblemService.getAssessmentProblemById(id as string);
+    const result = await AssessmentProblemService.getAssessmentProblemById(
+      id as string,
+    );
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
-      message:
-        "Assessment problem retrieved successfully",
+      message: "Assessment problem retrieved successfully",
       data: result,
     });
   },
 );
 
+const updateAssessmentProblem = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
-// const updateAssessmentProblem = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
-//     const userRole = req.user!.role;
+    const { id} = req.params;
 
-//     const result =
-//       await AssessmentProblemService.updateAssessmentProblem(
-//         userId,
-//         userRole,
-//         req.params.id,
-//         req.params.id,
-//         req.body
-//       );
+    // console.log( id);
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Assessment problem updated successfully",
-//       data: result,
-//     });
-//   }
-// );
+    if (!userId || !userRole) {
+      throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+    }
 
-// /**
-//  * Delete AssessmentProblem
-//  */
+
+
+
+
+    const result = await AssessmentProblemService.updateAssessmentProblem(
+      userId,
+      userRole,
+      id as string,
+
+      req.body,
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Assessment problem updated successfully",
+      data: result,
+    });
+  },
+);
+
 // const deleteAssessmentProblem = catchAsync(
 //   async (req: Request, res: Response) => {
 //     const userId = req.user!.userId;
@@ -135,7 +143,7 @@ console.log(req.params);
 export const AssessmentProblemController = {
   createAssessmentProblem,
   getAssessmentProblems,
-getAssessmentProblemById
-  //   updateAssessmentProblem,
+  getAssessmentProblemById,
+  updateAssessmentProblem,
   //   deleteAssessmentProblem,
 };
