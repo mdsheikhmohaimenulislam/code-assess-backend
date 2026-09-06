@@ -113,24 +113,41 @@ const updateAssessment = catchAsync(
 
 
 
-// const deleteAssessment = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
-//     const userRole = req.user!.role;
+const deleteAssessment = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    const { id } = req.params;
 
-//     const result = await AssessmentService.deleteAssessment(
-//       userId,
-//       userRole,
-//       req.params.id,
-//     );
+    if (!userId || !userRole) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Assessment deleted successfully",
-//       data: result,
-//     });
-//   },
-// );
+    if (!id) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Assessment ID is required",
+      );
+    }
+
+
+      await AssessmentService.deleteAssessment(
+        userId,
+        userRole,
+        id as string,
+      );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Assessment deleted successfully",
+      data: null,
+    });
+  },
+);
 
 // const publishAssessment = catchAsync(
 //   async (req: Request, res: Response) => {
@@ -194,7 +211,7 @@ export const AssessmentController = {
   getAssessments,
   getAssessmentById,
   updateAssessment,
-//   deleteAssessment,
+  deleteAssessment,
 //   publishAssessment,
 //   cancelAssessment,
 //   completeAssessment,

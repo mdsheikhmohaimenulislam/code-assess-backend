@@ -761,45 +761,88 @@ const updateAssessment = async (
 
 
 
-/**
- * Delete Assessment
- */
-// const deleteAssessment = async (
-//   userId: string,
-//   userRole: Role,
-//   assessmentId: string,
-// ) => {
-//   const existingAssessment =
-//     await checkAssessmentOwnership(
-//       assessmentId,
-//       userId,
-//       userRole,
-//     );
 
-//   // Do not delete active assessment
-//   if (
-//     existingAssessment.status !==
-//     AssessmentStatus.DRAFT
-//   ) {
-//     throw new Error(
-//       "Only draft assessment can be deleted",
-//     );
-//   }
+//  Delete Assessment
 
-//   const deletedAssessment =
-//     await prisma.assessment.delete({
-//       where: {
-//         id: assessmentId,
-//       },
+const deleteAssessment = async (
+  userId: string,
+  userRole: Role,
+  assessmentId: string,
+) => {
+  // Check user
+  if (!userId) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      "Unauthorized",
+    );
+  }
 
-//       select: {
-//         id: true,
-//         title: true,
-//       },
-//     });
+  // Check assessment ID
+  if (!assessmentId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Assessment ID is required",
+    );
+  }
 
-//   return deletedAssessment;
-// };
+  // Find assessment
+  const existingAssessment =
+    await prisma.assessment.findUnique({
+      where: {
+        id: assessmentId,
+      },
+      select: {
+        id: true,
+        title: true,
+        createdById: true,
+        status: true,
+      },
+    });
+
+  // Assessment not found
+  if (!existingAssessment) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Assessment not found",
+    );
+  }
+
+  // COMPANY can delete only their own assessment
+  if (
+    userRole === Role.COMPANY &&
+    existingAssessment.createdById !== userId
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You do not have permission to delete this assessment",
+    );
+  }
+
+  // Only draft assessment can be deleted
+  if (
+    existingAssessment.status !==
+    AssessmentStatus.DRAFT
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Only draft assessment can be deleted",
+    );
+  }
+
+  // Delete assessment
+  const deletedAssessment =
+    await prisma.assessment.delete({
+      where: {
+        id: assessmentId,
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+  return deletedAssessment;
+};
 
 /**
  * Publish Assessment
@@ -960,7 +1003,7 @@ export const AssessmentService = {
   getAssessments,
   getAssessmentById,
   updateAssessment,
-//   deleteAssessment,
+  deleteAssessment,
 //   publishAssessment,
 //   cancelAssessment,
 //   completeAssessment,

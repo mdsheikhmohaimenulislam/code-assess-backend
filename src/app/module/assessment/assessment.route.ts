@@ -36,11 +36,11 @@ router.patch(
   AssessmentController.updateAssessment,
 );
 
-// router.delete(
-//   "/:id",
-//   auth(Role.ADMIN, Role.COMPANY),
-//   AssessmentController.deleteAssessment,
-// );
+router.delete(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY),
+  AssessmentController.deleteAssessment,
+);
 
 // router.patch(
 //   "/:id/publish",
