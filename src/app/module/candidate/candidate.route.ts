@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { auth } from "../../middlewares/checkAuth.js";
 import { Role } from "../../../generated/prisma/enums.js";
-import { createCandidateValidationSchema } from "./candidate.validation.js";
+import { createCandidateValidationSchema, updateCandidateValidationSchema } from "./candidate.validation.js";
 import { validateRequest } from "../../middlewares/validateRequst.js";
 import { CandidateController } from "./candidate.controller.js";
 
@@ -22,12 +22,12 @@ router.get(
   CandidateController.getCandidateById,
 );
 
-// router.patch(
-//   "/:id",
-//   auth(Role.CANDIDATE),
-//   validateRequest(updateCandidateValidationSchema),
-//   CandidateController.updateCandidate
-// );
+router.patch(
+  "/:id",
+  auth(Role.CANDIDATE),
+  validateRequest(updateCandidateValidationSchema),
+  CandidateController.updateCandidate
+);
 
 // router.delete(
 //   "/:id",

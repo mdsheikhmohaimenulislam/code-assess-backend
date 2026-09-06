@@ -31,4 +31,12 @@ export const createCandidateValidationSchema = z.object({
 });
 
 export const updateCandidateValidationSchema =
-  createCandidateValidationSchema.partial();
+  createCandidateValidationSchema
+    .partial()
+    .refine(
+      (data) => Object.keys(data).length > 0,
+      {
+        message:
+          "At least one field is required to update the candidate profile",
+      },
+    );

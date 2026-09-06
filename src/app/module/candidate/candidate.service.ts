@@ -1,7 +1,7 @@
 import { Role, UserStatus } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
-import type { CreateCandidatePayload } from "./candidate.interface.js";
+import type { CreateCandidatePayload, UpdateCandidatePayload } from "./candidate.interface.js";
 import httpStatus from "http-status";
 
 const createCandidate = async (
@@ -168,82 +168,88 @@ const getCandidateById = async (candidateId: string) => {
   return candidate;
 };
 
-// const updateCandidate = async (
-//   userId: string,
-//   candidateId: string,
-//   payload: UpdateCandidatePayload
-// ) => {
-//   /**
-//    * Find candidate
-//    */
-//   const candidate =
-//     await prisma.candidateProfile.findUnique({
-//       where: {
-//         id: candidateId,
-//       },
-//     });
+const updateCandidate = async (
+  userId: string,
+  candidateId: string,
+  payload: UpdateCandidatePayload,
+) => {
+  /**
+   * Find candidate profile
+   */
+  const candidate =
+    await prisma.candidateProfile.findUnique({
+      where: {
+        id: candidateId,
+      },
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
 
-//   if (!candidate) {
-//     throw new ApiError(
-//       404,
-//       "Candidate profile not found"
-//     );
-//   }
+  if (!candidate) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Candidate profile not found",
+    );
+  }
 
-//   /**
-//    * Ownership check
-//    */
-//   if (candidate.userId !== userId) {
-//     throw new ApiError(
-//       403,
-//       "You are not allowed to update this profile"
-//     );
-//   }
+  /**
+   * Ownership check
+   */
+  if (candidate.userId !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to update this profile",
+    );
+  }
 
-//   /**
-//    * Update
-//    */
-//   const updatedCandidate =
-//     await prisma.candidateProfile.update({
-//       where: {
-//         id: candidateId,
-//       },
-//       data: {
-//         ...(payload.phone !== undefined && {
-//           phone: payload.phone,
-//         }),
+  /**
+   * Update candidate profile
+   */
+  const updatedCandidate =
+    await prisma.candidateProfile.update({
+      where: {
+        id: candidateId,
+      },
 
-//         ...(payload.bio !== undefined && {
-//           bio: payload.bio,
-//         }),
+      data: {
+        ...(payload.phone !== undefined && {
+          phone: payload.phone,
+        }),
 
-//         ...(payload.githubUrl !== undefined && {
-//           githubUrl: payload.githubUrl,
-//         }),
+        ...(payload.bio !== undefined && {
+          bio: payload.bio,
+        }),
 
-//         ...(payload.linkedinUrl !== undefined && {
-//           linkedinUrl: payload.linkedinUrl,
-//         }),
+        ...(payload.githubUrl !== undefined && {
+          githubUrl: payload.githubUrl,
+        }),
 
-//         ...(payload.resumeUrl !== undefined && {
-//           resumeUrl: payload.resumeUrl,
-//         }),
-//       },
+        ...(payload.linkedinUrl !== undefined && {
+          linkedinUrl: payload.linkedinUrl,
+        }),
 
-//       include: {
-//         user: {
-//           select: {
-//             id: true,
-//             name: true,
-//             email: true,
-//             role: true,
-//           },
-//         },
-//       },
-//     });
+        ...(payload.resumeUrl !== undefined && {
+          resumeUrl: payload.resumeUrl,
+        }),
+      },
 
-//   return updatedCandidate;
-// };
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+  return updatedCandidate;
+};
 
 // const deleteCandidate = async (
 //   userId: string,
@@ -295,6 +301,6 @@ export const CandidateService = {
   createCandidate,
     getMyCandidate,
     getCandidateById,
-  //   updateCandidate,
+    updateCandidate,
   //   deleteCandidate,
 };

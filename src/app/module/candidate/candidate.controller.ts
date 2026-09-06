@@ -81,23 +81,40 @@ const getCandidateById = catchAsync(
 );
 
 
-// const updateCandidate = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
+const updateCandidate = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
 
-//     const result = await CandidateService.updateCandidate(
-//       userId,
-//       req.params.id,
-//       req.body
-//     );
+    if (!userId) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Candidate profile updated successfully",
-//       data: result,
-//     });
-//   }
-// );
+    const candidateId = req.params.id;
+
+    if (!candidateId) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Candidate ID is required",
+      );
+    }
+
+    const result =
+      await CandidateService.updateCandidate(
+        userId,
+        candidateId as string,
+        req.body,
+      );
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: "Candidate profile updated successfully",
+      data: result,
+    });
+  },
+);
 
 
 // const deleteCandidate = catchAsync(
@@ -121,6 +138,6 @@ export const CandidateController = {
   createCandidate,
   getMyCandidate,
   getCandidateById,
-//   updateCandidate,
+  updateCandidate,
 //   deleteCandidate,
 };
