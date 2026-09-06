@@ -231,102 +231,97 @@ const createCompany = async (
 
 
 
-// // Get own company
-// const getMyCompany = async (
-//   userId: string,
-// ) => {
+// Get own company
+const getMyCompany = async (userId: string) => {
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      userId,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          status: true,
+        },
+      },
+      _count: {
+        select: {
+          assessments: true,
+        },
+      },
+    },
+  });
 
-//   const company =
-//     await prisma.companyProfile.findUnique({
-//       where: {
-//         userId,
-//       },
+  if (!company) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Company profile not found",
+    );
+  }
 
-//       include: {
-//         user: {
-//           select: {
-//             id: true,
-//             name: true,
-//             email: true,
-//             role: true,
-//             status: true,
-//           },
-//         },
+  return company;
+};
 
-//         _count: {
-//           select: {
-//             assessments: true,
-//           },
-//         },
-//       },
-//     });
+// Get company by ID
+const getCompanyById = async (
+  companyId: string,
+) => {
 
-//   if (!company) {
-//     throw new Error(
-//       "Company profile not found",
-//     );
-//   }
+  const company =
+    await prisma.companyProfile.findUnique({
+      where: {
+        id: companyId,
+      },
 
-//   return company;
-// };
+      select: {
+        id: true,
+        companyName: true,
+        description: true,
+        website: true,
+        logo: true,
+        createdAt: true,
+        updatedAt: true,
 
-// // Get company by ID
-// const getCompanyById = async (
-//   companyId: string,
-// ) => {
+        assessments: {
+          where: {
+            status: "PUBLISHED",
+          },
 
-//   const company =
-//     await prisma.companyProfile.findUnique({
-//       where: {
-//         id: companyId,
-//       },
+          select: {
+            id: true,
+            title: true,
+            duration: true,
+            totalMarks: true,
+            passingMarks: true,
+            accessType: true,
+            price: true,
+            status: true,
+          },
 
-//       select: {
-//         id: true,
-//         companyName: true,
-//         description: true,
-//         website: true,
-//         logo: true,
-//         createdAt: true,
-//         updatedAt: true,
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
 
-//         assessments: {
-//           where: {
-//             status: "PUBLISHED",
-//           },
+        _count: {
+          select: {
+            assessments: true,
+          },
+        },
+      },
+    });
 
-//           select: {
-//             id: true,
-//             title: true,
-//             duration: true,
-//             totalMarks: true,
-//             passingMarks: true,
-//             accessType: true,
-//             price: true,
-//             status: true,
-//           },
+  if (!company) {
+    throw new Error(
+      "Company profile not found",
+    );
+  }
 
-//           orderBy: {
-//             createdAt: "desc",
-//           },
-//         },
-
-//         _count: {
-//           select: {
-//             assessments: true,
-//           },
-//         },
-//       },
-//     });
-
-//   if (!company) {
-//     throw new Error(
-//       "Company profile not found",
-//     );
-//   }
-
-//   return company;
-// };
+  return company;
+};
 
 // // Update company
 // const updateCompany = async (
@@ -447,8 +442,8 @@ const createCompany = async (
 
 export const CompanyService = {
   createCompany,
-  //   getMyCompany,
-  //   getCompanyById,
+    getMyCompany,
+    getCompanyById,
   //   updateCompany,
   //   deleteCompany,
 };

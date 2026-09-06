@@ -24,37 +24,44 @@ const createCompany = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// // Get own company
-// const getMyCompany = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
+// Get own company
+const getMyCompany = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
 
-//     const result =
-//       await CompanyService.getMyCompany(userId);
+    if (!userId) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Company profile retrieved successfully",
-//       data: result,
-//     });
-//   },
-// );
+    const result = await CompanyService.getMyCompany(userId);
 
-// // Get company by ID
-// const getCompanyById = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const { id } = req.params;
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Company profile retrieved successfully",
+      data: result,
+    });
+  },
+);
 
-//     const result =
-//       await CompanyService.getCompanyById(id);
+// Get company by ID
+const getCompanyById = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Company profile retrieved successfully",
-//       data: result,
-//     });
-//   },
-// );
+    const result =
+      await CompanyService.getCompanyById(id);
+
+    res.status(200).json({
+      success: true,
+      message: "Company profile retrieved successfully",
+      data: result,
+    });
+  },
+);
 
 // // Update company
 // const updateCompany = catchAsync(
@@ -99,8 +106,8 @@ const createCompany = catchAsync(async (req: Request, res: Response) => {
 
 export const CompanyController = {
   createCompany,
-  //   getMyCompany,
-  //   getCompanyById,
+    getMyCompany,
+    getCompanyById,
   //   updateCompany,
   //   deleteCompany,
 };

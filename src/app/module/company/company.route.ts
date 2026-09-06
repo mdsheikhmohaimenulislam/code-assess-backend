@@ -18,20 +18,20 @@ router.post(
 );
 
 
-// // Get own company profile
-// router.get(
-//   "/me",
-//   auth(Role.COMPANY),
-//   CompanyController.getMyCompany,
-// );
+// Get own company profile
+router.get(
+  "/me",
+  auth(Role.COMPANY),
+  CompanyController.getMyCompany,
+);
 
 
-// // Get company by ID
-// router.get(
-//   "/:id",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   CompanyController.getCompanyById,
-// );
+// Get company by ID
+router.get(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+  CompanyController.getCompanyById,
+);
 
 
 // // Update own company profile
