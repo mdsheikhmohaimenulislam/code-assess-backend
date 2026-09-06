@@ -72,25 +72,46 @@ const getAssessmentById = catchAsync(
   },
 );
 
-// const updateAssessment = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
-//     const userRole = req.user!.role;
 
-//     const result = await AssessmentService.updateAssessment(
-//       userId,
-//       userRole,
-//       req.params.id,
-//       req.body,
-//     );
+const updateAssessment = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    const { id } = req.params;
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Assessment updated successfully",
-//       data: result,
-//     });
-//   },
-// );
+    if (!userId || !userRole) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
+
+    if (!id) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Assessment ID is required",
+      );
+    }
+
+    const result =
+      await AssessmentService.updateAssessment(
+        userId,
+        userRole,
+        id as string,
+        req.body,
+      );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message:
+        "Assessment updated successfully",
+      data: result,
+    });
+  },
+);
+
+
 
 // const deleteAssessment = catchAsync(
 //   async (req: Request, res: Response) => {
@@ -172,7 +193,7 @@ export const AssessmentController = {
   createAssessment,
   getAssessments,
   getAssessmentById,
-//   updateAssessment,
+  updateAssessment,
 //   deleteAssessment,
 //   publishAssessment,
 //   cancelAssessment,

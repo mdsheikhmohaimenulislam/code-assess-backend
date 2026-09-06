@@ -3,9 +3,10 @@ import { Role } from "../../../generated/prisma/enums.js";
 import { auth } from "../../middlewares/checkAuth.js";
 import { validateRequest } from "../../middlewares/validateRequst.js";
 import { AssessmentController } from "./assessment.controller.js";
-import { createAssessmentValidationSchema } from "./assessment.validation.js";
-
-
+import {
+  createAssessmentValidationSchema,
+  updateAssessmentValidationSchema,
+} from "./assessment.validation.js";
 
 const router = Router();
 
@@ -24,21 +25,16 @@ router.get(
 
 router.get(
   "/:id",
-  auth(
-    Role.ADMIN,
-    Role.COMPANY,
-    Role.CANDIDATE,
-  ),
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
   AssessmentController.getAssessmentById,
 );
 
-
-// router.patch(
-//   "/:id",
-//   auth(Role.ADMIN, Role.COMPANY),
-//   validateRequest(updateAssessmentValidationSchema),
-//   AssessmentController.updateAssessment,
-// );
+router.patch(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY),
+  validateRequest(updateAssessmentValidationSchema),
+  AssessmentController.updateAssessment,
+);
 
 // router.delete(
 //   "/:id",

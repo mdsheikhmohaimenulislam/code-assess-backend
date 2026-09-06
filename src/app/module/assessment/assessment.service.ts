@@ -2,7 +2,7 @@ import type { Prisma } from "../../../generated/prisma/client.js";
 import { AssessmentAccessType, AssessmentStatus, Role } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
-import type { ICreateAssessmentPayload } from "./assessment.interface.js";
+import type { ICreateAssessmentPayload, UpdateAssessmentPayload } from "./assessment.interface.js";
 import httpStatus from 'http-status';
 
 
@@ -552,186 +552,214 @@ const getAssessmentById = async (
 };
 
 
-/**
- * Update Assessment
- */
-// const updateAssessment = async (
-//   userId: string,
-//   userRole: Role,
-//   assessmentId: string,
-//   payload: UpdateAssessmentPayload,
-// ) => {
-//   const existingAssessment =
-//     await checkAssessmentOwnership(
-//       assessmentId,
-//       userId,
-//       userRole,
-//     );
 
-//   // Only DRAFT assessment should be freely editable
-//   if (
-//     existingAssessment.status !==
-//     AssessmentStatus.DRAFT
-//   ) {
-//     throw new Error(
-//       "Only draft assessment can be updated",
-//     );
-//   }
+// Update Assessment
+const updateAssessment = async (
+  userId: string,
+  userRole: Role,
+  assessmentId: string,
+  payload: UpdateAssessmentPayload,
+) => {
+  // Check user
+  if (!userId) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      "Unauthorized",
+    );
+  }
 
-//   const totalMarks =
-//     payload.totalMarks ??
-//     (
-//       await prisma.assessment.findUnique({
-//         where: {
-//           id: assessmentId,
-//         },
-//         select: {
-//           totalMarks: true,
-//         },
-//       })
-//     )?.totalMarks;
+  // Check assessment ID
+  if (!assessmentId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Assessment ID is required",
+    );
+  }
 
-//   const passingMarks =
-//     payload.passingMarks ??
-//     (
-//       await prisma.assessment.findUnique({
-//         where: {
-//           id: assessmentId,
-//         },
-//         select: {
-//           passingMarks: true,
-//         },
-//       })
-//     )?.passingMarks;
+  // Find assessment
+  const existingAssessment =
+    await prisma.assessment.findUnique({
+      where: {
+        id: assessmentId,
+      },
+      select: {
+        id: true,
+        createdById: true,
+        status: true,
+        totalMarks: true,
+        passingMarks: true,
+        accessType: true,
+        price: true,
+        startTime: true,
+        endTime: true,
+      },
+    });
 
-//   if (
-//     totalMarks !== undefined &&
-//     passingMarks !== undefined &&
-//     passingMarks > totalMarks
-//   ) {
-//     throw new Error(
-//       "Passing marks cannot be greater than total marks",
-//     );
-//   }
+  // Assessment not found
+  if (!existingAssessment) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Assessment not found",
+    );
+  }
 
-//   // Validate paid/free logic
-//   const accessType =
-//     payload.accessType ??
-//     (
-//       await prisma.assessment.findUnique({
-//         where: {
-//           id: assessmentId,
-//         },
-//         select: {
-//           accessType: true,
-//         },
-//       })
-//     )?.accessType;
+  // COMPANY can update only their own assessment
+  if (
+    userRole === Role.COMPANY &&
+    existingAssessment.createdById !== userId
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You do not have permission to update this assessment",
+    );
+  }
 
-//   if (
-//     accessType === AssessmentAccessType.PAID
-//   ) {
-//     if (
-//       payload.price === undefined &&
-//       (
-//         await prisma.assessment.findUnique({
-//           where: {
-//             id: assessmentId,
-//           },
-//           select: {
-//             price: true,
-//           },
-//         })
-//       )?.price === null
-//     ) {
-//       throw new Error(
-//         "Price is required for paid assessment",
-//       );
-//     }
+  // Only DRAFT assessment can be updated
+  if (
+    existingAssessment.status !==
+    AssessmentStatus.DRAFT
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Only draft assessment can be updated",
+    );
+  }
 
-//     if (
-//       payload.price !== undefined &&
-//       payload.price !== null &&
-//       payload.price <= 0
-//     ) {
-//       throw new Error(
-//         "Paid assessment price must be greater than 0",
-//       );
-//     }
-//   }
+  // Existing value + new value
+  const totalMarks =
+    payload.totalMarks ??
+    existingAssessment.totalMarks;
 
-//   if (
-//     accessType === AssessmentAccessType.FREE &&
-//     payload.price !== undefined &&
-//     payload.price !== null &&
-//     payload.price !== 0
-//   ) {
-//     throw new Error(
-//       "Free assessment cannot have a price",
-//     );
-//   }
+  const passingMarks =
+    payload.passingMarks ??
+    existingAssessment.passingMarks;
 
-//   if (
-//     payload.startTime &&
-//     payload.endTime &&
-//     payload.startTime >= payload.endTime
-//   ) {
-//     throw new Error(
-//       "End time must be greater than start time",
-//     );
-//   }
+  const accessType =
+    payload.accessType ??
+    existingAssessment.accessType;
 
-//   const updatedAssessment =
-//     await prisma.assessment.update({
-//       where: {
-//         id: assessmentId,
-//       },
+  // Passing marks validation
+  if (passingMarks > totalMarks) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Passing marks cannot be greater than total marks",
+    );
+  }
 
-//       data: {
-//         ...(payload.title !== undefined && {
-//           title: payload.title,
-//         }),
+  // Date validation
+  const startTime =
+    payload.startTime ??
+    existingAssessment.startTime;
 
-//         ...(payload.description !== undefined && {
-//           description: payload.description,
-//         }),
+  const endTime =
+    payload.endTime ??
+    existingAssessment.endTime;
 
-//         ...(payload.duration !== undefined && {
-//           duration: payload.duration,
-//         }),
+  if (
+    startTime &&
+    endTime &&
+    startTime >= endTime
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "End time must be greater than start time",
+    );
+  }
 
-//         ...(payload.startTime !== undefined && {
-//           startTime: payload.startTime,
-//         }),
+  // Paid assessment validation
+  if (
+    accessType === AssessmentAccessType.PAID
+  ) {
+    const finalPrice =
+      payload.price !== undefined
+        ? payload.price
+        : existingAssessment.price;
 
-//         ...(payload.endTime !== undefined && {
-//           endTime: payload.endTime,
-//         }),
+    if (
+      finalPrice === null ||
+      finalPrice === undefined
+    ) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Price is required for paid assessment",
+      );
+    }
 
-//         ...(payload.totalMarks !== undefined && {
-//           totalMarks: payload.totalMarks,
-//         }),
+    if (Number(finalPrice) <= 0) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Paid assessment price must be greater than 0",
+      );
+    }
+  }
 
-//         ...(payload.passingMarks !== undefined && {
-//           passingMarks: payload.passingMarks,
-//         }),
+  // Free assessment validation
+  if (
+    accessType === AssessmentAccessType.FREE &&
+    payload.price !== undefined &&
+    payload.price !== null &&
+    payload.price !== 0
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Free assessment cannot have a price",
+    );
+  }
 
-//         ...(payload.accessType !== undefined && {
-//           accessType: payload.accessType,
-//         }),
+  // Update assessment
+  const updatedAssessment =
+    await prisma.assessment.update({
+      where: {
+        id: assessmentId,
+      },
 
-//         ...(payload.price !== undefined && {
-//           price:
-//             payload.accessType ===
-//               AssessmentAccessType.FREE
-//               ? null
-//               : payload.price,
-//         }),
-//       },
-//     });
+      data: {
+        ...(payload.title !== undefined && {
+          title: payload.title.trim(),
+        }),
 
-//   return updatedAssessment;
-// };
+        ...(payload.description !== undefined && {
+          description: payload.description.trim(),
+        }),
+
+        ...(payload.duration !== undefined && {
+          duration: payload.duration,
+        }),
+
+        ...(payload.startTime !== undefined && {
+          startTime: payload.startTime,
+        }),
+
+        ...(payload.endTime !== undefined && {
+          endTime: payload.endTime,
+        }),
+
+        ...(payload.totalMarks !== undefined && {
+          totalMarks: payload.totalMarks,
+        }),
+
+        ...(payload.passingMarks !== undefined && {
+          passingMarks: payload.passingMarks,
+        }),
+
+        ...(payload.accessType !== undefined && {
+          accessType: payload.accessType,
+        }),
+
+        ...(payload.price !== undefined && {
+          price:
+            accessType === AssessmentAccessType.FREE
+              ? null
+              : payload.price,
+        }),
+      },
+    });
+
+  return updatedAssessment;
+};
+
+
+
 
 /**
  * Delete Assessment
@@ -931,7 +959,7 @@ export const AssessmentService = {
   createAssessment,
   getAssessments,
   getAssessmentById,
-//   updateAssessment,
+  updateAssessment,
 //   deleteAssessment,
 //   publishAssessment,
 //   cancelAssessment,

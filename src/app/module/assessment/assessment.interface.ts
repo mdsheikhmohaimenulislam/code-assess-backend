@@ -1,6 +1,4 @@
-import {
-  AssessmentAccessType,
-} from "../../../generated/prisma/enums.js";
+import { AssessmentAccessType } from "../../../generated/prisma/enums.js";
 
 export interface ICreateAssessmentPayload {
   title: string;
@@ -15,7 +13,7 @@ export interface ICreateAssessmentPayload {
   companyId: string;
 }
 
-export interface IUpdateAssessmentPayload {
+export interface UpdateAssessmentPayload {
   title?: string;
   description?: string;
   duration?: number;
@@ -24,5 +22,5 @@ export interface IUpdateAssessmentPayload {
   totalMarks?: number;
   passingMarks?: number;
   accessType?: AssessmentAccessType;
-  price?: number;
+  price?: number | null;
 }
