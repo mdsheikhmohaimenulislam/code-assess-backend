@@ -43,12 +43,12 @@ router.patch(
 );
 
 
-// // Delete own company profile
-// router.delete(
-//   "/:id",
-//   auth(Role.COMPANY),
-//   CompanyController.deleteCompany,
-// );
+// Delete own company profile
+router.delete(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY),
+  CompanyController.deleteCompany,
+);
 
 
 export const CompanyRoutes = router;

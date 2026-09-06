@@ -442,56 +442,73 @@ const updateCompany = async (
   return updatedCompany;
 };
 
-// // Delete company
-// const deleteCompany = async (
-//   userId: string,
-//   companyId: string,
-// ) => {
+// Delete company
+const deleteCompany = async (
+  userId: string,
+  userRole: Role,
+  companyId: string,
+) => {
+  if (!userId) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      "Unauthorized",
+    );
+  }
 
-//   const company =
-//     await prisma.companyProfile.findUnique({
-//       where: {
-//         id: companyId,
-//       },
+  if (!companyId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Company ID is required",
+    );
+  }
 
-//       select: {
-//         id: true,
-//         userId: true,
-//       },
-//     });
+  const company = await prisma.companyProfile.findUnique({
+    where: {
+      id: companyId,
+    },
+    select: {
+      id: true,
+      userId: true,
+      companyName: true,
+    },
+  });
 
-//   if (!company) {
-//     throw new Error(
-//       "Company profile not found",
-//     );
-//   }
+  if (!company) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Company profile not found",
+    );
+  }
 
-//   // Ownership check
-//   if (company.userId !== userId) {
-//     throw new Error(
-//       "You can only delete your own company profile",
-//     );
-//   }
+  // COMPANY can delete only their own profile
+  if (
+    userRole === Role.COMPANY &&
+    company.userId !== userId
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You can only delete your own company profile",
+    );
+  }
 
-//   const deletedCompany =
-//     await prisma.companyProfile.delete({
-//       where: {
-//         id: companyId,
-//       },
+  const deletedCompany =
+    await prisma.companyProfile.delete({
+      where: {
+        id: companyId,
+      },
+      select: {
+        id: true,
+        companyName: true,
+      },
+    });
 
-//       select: {
-//         id: true,
-//         companyName: true,
-//       },
-//     });
-
-//   return deletedCompany;
-// };
+  return deletedCompany;
+};
 
 export const CompanyService = {
   createCompany,
     getMyCompany,
     getCompanyById,
     updateCompany,
-  //   deleteCompany,
+    deleteCompany,
 };

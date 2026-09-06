@@ -25,112 +25,98 @@ const createCompany = catchAsync(async (req: Request, res: Response) => {
 });
 
 // Get own company
-const getMyCompany = catchAsync(
-  async (req: Request, res: Response) => {
-    const userId = req.user?.userId;
+const getMyCompany = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
 
-    if (!userId) {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        "Unauthorized",
-      );
-    }
+  if (!userId) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+  }
 
-    const result = await CompanyService.getMyCompany(userId);
+  const result = await CompanyService.getMyCompany(userId);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Company profile retrieved successfully",
-      data: result,
-    });
-  },
-);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Company profile retrieved successfully",
+    data: result,
+  });
+});
 
 // Get company by ID
-const getCompanyById = catchAsync(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
+const getCompanyById = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-    if (!id) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Company ID is required",
-      );
-    }
+  if (!id) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Company ID is required");
+  }
 
-    const result = await CompanyService.getCompanyById(id as string);
+  const result = await CompanyService.getCompanyById(id as string);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Company profile retrieved successfully",
-      data: result,
-    });
-  },
-);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Company profile retrieved successfully",
+    data: result,
+  });
+});
 
 // Update company
-const updateCompany = catchAsync(
-  async (req: Request, res: Response) => {
-    const userId = req.user?.userId;
-    const userRole = req.user?.role;
-    const { id } = req.params;
+const updateCompany = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const userRole = req.user?.role;
+  const { id } = req.params;
 
-    if (!userId || !userRole) {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        "Unauthorized",
-      );
-    }
+  if (!userId || !userRole) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+  }
 
-    if (!id) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Company ID is required",
-      );
-    }
+  if (!id) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Company ID is required");
+  }
 
-    const result = await CompanyService.updateCompany(
-      userId,
-      userRole,
-      id as string,
-      req.body,
-    );
+  const result = await CompanyService.updateCompany(
+    userId,
+    userRole,
+    id as string,
+    req.body,
+  );
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Company profile updated successfully",
-      data: result,
-    });
-  },
-);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Company profile updated successfully",
+    data: result,
+  });
+});
 
-// // Delete company
-// const deleteCompany = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
-//     const { id } = req.params;
+// Delete company
+const deleteCompany = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const userRole = req.user?.role;
+  const { id } = req.params;
 
-//     const result =
-//       await CompanyService.deleteCompany(
-//         userId,
-//         id,
-//       );
+  if (!userId || !userRole) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+  }
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Company profile deleted successfully",
-//       data: result,
-//     });
-//   },
-// );
+  if (!id) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Company ID is required");
+  }
+
+  await CompanyService.deleteCompany(userId, userRole, id as string);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Company profile deleted successfully",
+    data: null,
+  });
+});
 
 export const CompanyController = {
   createCompany,
-    getMyCompany,
-    getCompanyById,
-    updateCompany,
-  //   deleteCompany,
+  getMyCompany,
+  getCompanyById,
+  updateCompany,
+  deleteCompany,
 };
