@@ -1,0 +1,24 @@
+model Answer {
+  id        String @id @default(uuid())
+
+  attemptId String
+  problemId String
+
+  answer    String?
+  language  ProgrammingLanguage
+  marks     Float?
+  isCorrect Boolean?
+
+  attempt Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([attemptId, problemId])
+  @@index([attemptId])
+  @@index([problemId])
+
+  @@map("answers")
+}

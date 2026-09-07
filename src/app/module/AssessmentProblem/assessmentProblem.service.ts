@@ -16,7 +16,7 @@ const createAssessmentProblem = async (
 ) => {
   const { problemId, marks, order } = payload;
 
-  // Check user
+  // Validate user
   if (!userId) {
     throw new AppError(
       httpStatus.UNAUTHORIZED,
@@ -24,7 +24,7 @@ const createAssessmentProblem = async (
     );
   }
 
-  // Check assessment ID
+  // Validate assessment ID
   if (!assessmentId) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
@@ -32,24 +32,46 @@ const createAssessmentProblem = async (
     );
   }
 
-  // Find assessment
-  const assessment =
-    await prisma.assessment.findUnique({
-      where: {
-        id: assessmentId,
-      },
-      select: {
-        id: true,
-        status: true,
-        createdById: true,
+  // Validate problem ID
+  if (!problemId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Problem ID is required",
+    );
+  }
 
-        company: {
-          select: {
-            userId: true,
-          },
+  // Validate marks
+  if (marks <= 0) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Marks must be greater than 0",
+    );
+  }
+
+  // Validate order
+  if (order <= 0) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Order must be greater than 0",
+    );
+  }
+
+  // Find assessment
+  const assessment = await prisma.assessment.findUnique({
+    where: {
+      id: assessmentId,
+    },
+    select: {
+      id: true,
+      status: true,
+      createdById: true,
+      company: {
+        select: {
+          userId: true,
         },
       },
-    });
+    },
+  });
 
   // Assessment not found
   if (!assessment) {
@@ -70,17 +92,15 @@ const createAssessmentProblem = async (
     );
   }
 
-  // Only draft assessment
-  if (
-    assessment.status !== AssessmentStatus.DRAFT
-  ) {
+  // Only DRAFT assessment can be modified
+  if (assessment.status !== AssessmentStatus.DRAFT) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       "Problems can only be added to a draft assessment",
     );
   }
 
-  // Check problem
+  // Find problem
   const problem = await prisma.problem.findUnique({
     where: {
       id: problemId,
@@ -88,9 +108,13 @@ const createAssessmentProblem = async (
     select: {
       id: true,
       title: true,
+      type: true,
+      difficulty: true,
+      category: true,
     },
   });
 
+  // Problem not found
   if (!problem) {
     throw new AppError(
       httpStatus.NOT_FOUND,
@@ -106,6 +130,9 @@ const createAssessmentProblem = async (
           assessmentId,
           problemId,
         },
+      },
+      select: {
+        id: true,
       },
     });
 
@@ -125,6 +152,9 @@ const createAssessmentProblem = async (
           order,
         },
       },
+      select: {
+        id: true,
+      },
     });
 
   if (existingOrder) {
@@ -134,63 +164,59 @@ const createAssessmentProblem = async (
     );
   }
 
-  // Create assessment problem + update total marks
-  const result = await prisma.$transaction(
-    async (tx) => {
-      const assessmentProblem =
-        await tx.assessmentProblem.create({
-          data: {
-            assessmentId,
-            problemId,
-            marks,
-            order,
-          },
-          select: {
-            id: true,
-            assessmentId: true,
-            problemId: true,
-            marks: true,
-            order: true,
-
-            problem: {
-              select: {
-                id: true,
-                title: true,
-                type: true,
-                difficulty: true,
-                category: true,
-              },
+  // Create AssessmentProblem + update total marks
+  const result = await prisma.$transaction(async (tx) => {
+    const assessmentProblem =
+      await tx.assessmentProblem.create({
+        data: {
+          assessmentId,
+          problemId,
+          marks,
+          order,
+        },
+        select: {
+          id: true,
+          assessmentId: true,
+          problemId: true,
+          marks: true,
+          order: true,
+          problem: {
+            select: {
+              id: true,
+              title: true,
+              type: true,
+              difficulty: true,
+              category: true,
             },
           },
-        });
-
-      // Calculate total marks
-      const marksResult =
-        await tx.assessmentProblem.aggregate({
-          where: {
-            assessmentId,
-          },
-          _sum: {
-            marks: true,
-          },
-        });
-
-      const totalMarks =
-        marksResult._sum.marks ?? 0;
-
-      // Update assessment total marks
-      await tx.assessment.update({
-        where: {
-          id: assessmentId,
-        },
-        data: {
-          totalMarks,
         },
       });
 
-      return assessmentProblem;
-    },
-  );
+    // Calculate total marks
+    const marksResult =
+      await tx.assessmentProblem.aggregate({
+        where: {
+          assessmentId,
+        },
+        _sum: {
+          marks: true,
+        },
+      });
+
+    const totalMarks = marksResult._sum.marks ?? 0;
+
+    // Update assessment total marks
+    await tx.assessment.update({
+      where: {
+        id: assessmentId,
+      },
+      data: {
+        totalMarks,
+      },
+    });
+
+    return assessmentProblem;
+  });
 
   return result;
 };

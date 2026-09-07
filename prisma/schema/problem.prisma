@@ -17,6 +17,7 @@ model Problem {
   testCases          TestCase[]
   mcqOptions         MCQOption[]
  mcqAnswers MCQAnswer[]
+ answers Answer[]
 
   assessmentProblems AssessmentProblem[]
   submissions        Submission[]

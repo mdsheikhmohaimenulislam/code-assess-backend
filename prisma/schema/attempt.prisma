@@ -17,6 +17,7 @@ model Attempt {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 mcqAnswers MCQAnswer[]
   submissions Submission[]
+  answers Answer[]
   result      Result?
 
   createdAt DateTime @default(now())

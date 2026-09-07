@@ -10,6 +10,7 @@ const createAssessment = catchAsync(
   async (req: Request, res: Response) => {
     const userId = req.user?.userId;
     const userRole = req.user?.role;
+    
 
     if (!userId || !userRole) {
       throw new AppError(401, "Unauthorized");

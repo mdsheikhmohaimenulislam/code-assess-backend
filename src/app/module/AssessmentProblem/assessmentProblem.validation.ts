@@ -1,17 +1,18 @@
 import { z } from "zod";
 
-export const createAssessmentProblemValidationSchema = z.object({
-  problemId: z.string().uuid("Invalid problem ID"),
+export const createAssessmentProblemValidationSchema =
+  z.object({
+    problemId: z.string().uuid("Invalid problem ID"),
 
-  marks: z
-    .number()
-    .positive("Marks must be greater than 0"),
+    marks: z
+      .number()
+      .positive("Marks must be greater than 0"),
 
-  order: z
-    .number()
-    .int()
-    .positive("Order must be greater than 0"),
-});
+    order: z
+      .number()
+      .int("Order must be an integer")
+      .positive("Order must be greater than 0"),
+  });
 
 export const updateAssessmentProblemValidationSchema = z
   .object({

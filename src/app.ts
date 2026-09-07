@@ -22,6 +22,8 @@ import { CandidateRoutes } from "./app/module/candidate/candidate.route.js";
 import { AttemptRoutes } from "./app/module/attempt/attempt.route.js";
 import { TestCaseRoutes } from "./app/module/testCase/testCase.route.js";
 import { MCQAnswerRoutes } from "./app/module/MCQOption/mcqAnswer.route.js";
+import { AnswerRoutes } from "./app/module/answer/answer.route.js";
+import { EvaluationRoutes } from "./app/module/evaluation/evaluation.routes.js";
 
 const app: Application = express();
 
@@ -50,6 +52,9 @@ app.use("/api/v1/invitations", InvitationRoutes);
 app.use("/api/v1/candidate", CandidateRoutes);
 app.use("/api/v1/attempts", AttemptRoutes);
 app.use("/api/v1/test-cases", TestCaseRoutes);
+app.use("/api/v1/attempts", AnswerRoutes);
+app.use("/api/v1/answer", AnswerRoutes);
+app.use("/api/v1/evaluations", EvaluationRoutes);
 // app.use("/api/v1/mcq-answers", MCQAnswerRoutes);
 
 // Basic route...
