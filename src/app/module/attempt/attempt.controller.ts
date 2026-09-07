@@ -23,30 +23,36 @@ const createAttempt = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const getAttempts = async (
-//   req: Request,
-//   res: Response
-// ) => {
-//   const userId = req.user!.userId;
-//   const userRole = req.user!.role;
+const getAttempts = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
-//   const page = Number(req.query.page) || 1;
-//   const limit = Number(req.query.limit) || 10;
+    if (!userId || !userRole) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-//   const result = await AttemptService.getAttempts({
-//     userId,
-//     userRole,
-//     page,
-//     limit,
-//   });
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
 
-//   res.status(200).json({
-//     success: true,
-//     message: "Attempts retrieved successfully",
-//     data: result.data,
-//     meta: result.meta,
-//   });
-// };
+    const result = await AttemptService.getAttempts({
+      userId,
+      userRole,
+      page,
+      limit,
+    });
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: "Attempts retrieved successfully",
+      data: result.data,
+      meta: result.meta,
+    });
+  },
+);
 
 // const getAttemptById = async (
 //   req: Request,
@@ -92,7 +98,7 @@ const createAttempt = catchAsync(async (req: Request, res: Response) => {
 
 export const AttemptController = {
   createAttempt,
-  //   getAttempts,
+    getAttempts,
   //   getAttemptById,
   //   submitAttempt,
 };

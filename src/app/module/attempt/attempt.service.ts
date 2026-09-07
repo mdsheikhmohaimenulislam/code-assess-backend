@@ -2,10 +2,13 @@ import {
   AssessmentStatus,
   AttemptStatus,
   InvitationStatus,
+  Role,
 } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import httpStatus from "http-status";
 import { AppError } from "../../utils/AppError.js";
+import type { GetAttemptsParams } from "./attempt.interface.js";
+import type { Prisma } from "../../../generated/prisma/client.js";
 
 const createAttempt = async (userId: string, assessmentId: string) => {
   // 1. Find candidate profile
@@ -195,76 +198,82 @@ const createAttempt = async (userId: string, assessmentId: string) => {
   return attempt;
 };
 
-// const getAttempts = async ({
-//   userId,
-//   userRole,
-//   page,
-//   limit,
-// }: GetAttemptsParams) => {
-//   const skip = (page - 1) * limit;
+const getAttempts = async ({
+  userId,
+  userRole,
+  page,
+  limit,
+}: GetAttemptsParams) => {
+  const skip = (page - 1) * limit;
 
-//   let where: Prisma.AttemptWhereInput = {};
+  let where: Prisma.AttemptWhereInput = {};
 
-//   // Candidate শুধু নিজের attempts দেখতে পারবে
-//   if (userRole === "CANDIDATE") {
-//     const candidate = await prisma.candidateProfile.findUnique({
-//       where: {
-//         userId,
-//       },
-//     });
+  // Candidate শুধু নিজের attempts দেখতে পারবে
+  if (userRole === Role.CANDIDATE) {
+    const candidate = await prisma.candidateProfile.findUnique({
+      where: {
+        userId,
+      },
+      select: {
+        id: true,
+      },
+    });
 
-//     if (!candidate) {
-//       throw new Error("Candidate profile not found");
-//     }
+    if (!candidate) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        "Candidate profile not found",
+      );
+    }
 
-//     where = {
-//       candidateId: candidate.id,
-//     };
-//   }
+    where = {
+      candidateId: candidate.id,
+    };
+  }
 
-//   const [attempts, total] = await prisma.$transaction([
-//     prisma.attempt.findMany({
-//       where,
-//       skip,
-//       take: limit,
-//       orderBy: {
-//         createdAt: "desc",
-//       },
-//       include: {
-//         assessment: {
-//           select: {
-//             id: true,
-//             title: true,
-//             duration: true,
-//             totalMarks: true,
-//             passingMarks: true,
-//             status: true,
-//           },
-//         },
-//         candidate: {
-//           select: {
-//             id: true,
-//             userId: true,
-//           },
-//         },
-//       },
-//     }),
+  const [attempts, total] = await prisma.$transaction([
+    prisma.attempt.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        assessment: {
+          select: {
+            id: true,
+            title: true,
+            duration: true,
+            totalMarks: true,
+            passingMarks: true,
+            status: true,
+          },
+        },
+        candidate: {
+          select: {
+            id: true,
+            userId: true,
+          },
+        },
+      },
+    }),
 
-//     prisma.attempt.count({
-//       where,
-//     }),
-//   ]);
+    prisma.attempt.count({
+      where,
+    }),
+  ]);
 
-//   return {
-//     data: attempts,
-//     meta: {
-//       page,
-//       limit,
-//       total,
-//       totalPages: Math.ceil(total / limit),
-//     },
-//   };
-// };
+  return {
+    data: attempts,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
 
 // const getAttemptById = async (
 //   userId: string,
@@ -398,7 +407,7 @@ const createAttempt = async (userId: string, assessmentId: string) => {
 
 export const AttemptService = {
   createAttempt,
-  //   getAttempts,
+    getAttempts,
   //   getAttemptById,
   //   submitAttempt,
 };

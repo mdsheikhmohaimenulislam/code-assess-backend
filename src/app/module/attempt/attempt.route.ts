@@ -18,11 +18,11 @@ router.post(
 );
 
 
-// router.get(
-//   "/",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   AttemptController.getAttempts
-// );
+router.get(
+  "/",
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+  AttemptController.getAttempts
+);
 
 
 // router.get(
