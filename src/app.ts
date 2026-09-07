@@ -24,6 +24,8 @@ import { TestCaseRoutes } from "./app/module/testCase/testCase.route.js";
 import { MCQAnswerRoutes } from "./app/module/MCQOption/mcqAnswer.route.js";
 import { AnswerRoutes } from "./app/module/answer/answer.route.js";
 import { EvaluationRoutes } from "./app/module/evaluation/evaluation.routes.js";
+import { ResultRoutes } from "./app/module/result/result.route.js";
+import { PaymentRoutes } from "./app/module/payments/payment.route.js";
 
 const app: Application = express();
 
@@ -55,6 +57,8 @@ app.use("/api/v1/test-cases", TestCaseRoutes);
 app.use("/api/v1/attempts", AnswerRoutes);
 app.use("/api/v1/answer", AnswerRoutes);
 app.use("/api/v1/evaluations", EvaluationRoutes);
+app.use("/api/v1/result/attempts", ResultRoutes);
+app.use("/api/v1/payment", PaymentRoutes);
 // app.use("/api/v1/mcq-answers", MCQAnswerRoutes);
 
 // Basic route...

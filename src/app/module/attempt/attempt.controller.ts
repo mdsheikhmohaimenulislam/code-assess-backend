@@ -100,7 +100,8 @@ const submitAttempt = catchAsync(
       id as string,
     );
 
-    res.status(httpStatus.OK).json({
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
       success: true,
       message: "Assessment submitted successfully",
       data: result,

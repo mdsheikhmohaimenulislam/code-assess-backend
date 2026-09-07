@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Assessment Result</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f8;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #333;
+    }
+
+    .container {
+      max-width: 650px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow:
+        0 4px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .header {
+      background-color: #1f2937;
+      color: #ffffff;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .content p {
+      line-height: 1.6;
+    }
+
+    .result-box {
+      margin: 25px 0;
+      padding: 20px;
+      background-color: #f8fafc;
+      border-radius: 10px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .value {
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .status {
+      margin-top: 25px;
+      padding: 15px;
+      text-align: center;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .passed {
+      background-color: #dcfce7;
+      color: #166534;
+    }
+
+    .failed {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+
+    .footer {
+      padding: 20px 30px;
+      background-color: #f9fafb;
+      text-align: center;
+      color: #6b7280;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- Header -->
+
+    <div class="header">
+      <h1>Assessment Result</h1>
+    </div>
+
+
+    <!-- Content -->
+
+    <div class="content">
+
+      <p>
+        Hello
+        <strong>
+          <%= candidateName %>
+        </strong>,
+      </p>
+
+      <p>
+        Your result for the assessment
+        <strong>
+          <%= assessmentTitle %>
+        </strong>
+        has been generated successfully.
+      </p>
+
+
+      <!-- Result -->
+
+      <div class="result-box">
+
+        <div class="row">
+          <span class="label">
+            Assessment
+          </span>
+
+          <span class="value">
+            <%= assessmentTitle %>
+          </span>
+        </div>
+
+
+        <div class="row">
+          <span class="label">
+            Total Marks
+          </span>
+
+          <span class="value">
+            <%= totalMarks %>
+          </span>
+        </div>
+
+
+        <div class="row">
+          <span class="label">
+            Obtained Marks
+          </span>
+
+          <span class="value">
+            <%= obtainedMarks %>
+          </span>
+        </div>
+
+
+        <div class="row">
+          <span class="label">
+            Passing Marks
+          </span>
+
+          <span class="value">
+            <%= passingMarks %>
+          </span>
+        </div>
+
+
+        <div class="row">
+          <span class="label">
+            Percentage
+          </span>
+
+          <span class="value">
+            <%= percentage %>%
+          </span>
+        </div>
+
+      </div>
+
+
+      <!-- Pass / Fail -->
+
+      <% if (passed) { %>
+
+        <div class="status passed">
+          Congratulations! You Passed 🎉
+        </div>
+
+      <% } else { %>
+
+        <div class="status failed">
+          Unfortunately, You Did Not Pass
+        </div>
+
+      <% } %>
+
+
+      <p>
+        Thank you for participating in the assessment.
+      </p>
+
+      <p>
+        Best regards,<br />
+
+        <strong>
+          Code Assess Team
+        </strong>
+      </p>
+
+    </div>
+
+
+    <!-- Footer -->
+
+    <div class="footer">
+      This is an automated email.
+      Please do not reply directly to this email.
+    </div>
+
+  </div>
+
+</body>
+</html>
