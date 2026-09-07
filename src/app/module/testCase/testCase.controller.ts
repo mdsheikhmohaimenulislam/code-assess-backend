@@ -36,51 +36,69 @@ const createTestCase = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// // Get all
-// const getTestCases = async (
-//   req: Request,
-//   res: Response
-// ) => {
-//   const userId = req.user!.userId;
-//   const userRole = req.user!.role;
+const getTestCases = catchAsync(
+  async (req: Request, res: Response) => {
 
-//   const { problemId } = req.params;
+  console.log("🔥 ROUTE HIT");
+  console.log("PARAMS:", req.params);
 
-//   const result = await TestCaseService.getTestCases(
-//     userId,
-//     userRole,
-//     problemId
-//   );
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    const { id } = req.params;
 
-//   res.status(200).json({
-//     success: true,
-//     message: "Test cases retrieved successfully",
-//     data: result,
-//   });
-// };
 
-// // Get single
-// const getTestCaseById = async (
-//   req: Request,
-//   res: Response
-// ) => {
-//   const userId = req.user!.userId;
-//   const userRole = req.user!.role;
+    if (!userId || !userRole) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-//   const { id } = req.params;
+    if (!id) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Problem ID is required",
+      );
+    }
 
-//   const result = await TestCaseService.getTestCaseById(
-//     userId,
-//     userRole,
-//     id
-//   );
+    const result = await TestCaseService.getTestCase(
+      userId,
+      userRole,
+      id as string ,
+    );
 
-//   res.status(200).json({
-//     success: true,
-//     message: "Test case retrieved successfully",
-//     data: result,
-//   });
-// };
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Test cases retrieved successfully",
+      data: result,
+    });
+  },
+);
+
+
+// Get single
+const getTestCaseById = async (
+  req: Request,
+  res: Response
+) => {
+  const userId = req.user!.userId;
+  const userRole = req.user!.role;
+
+  const { id } = req.params;
+
+  const result = await TestCaseService.getTestCaseById(
+    userId,
+    userRole,
+    id
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Test case retrieved successfully",
+    data: result,
+  });
+};
 
 // // Update
 // const updateTestCase = async (
@@ -131,7 +149,7 @@ const createTestCase = catchAsync(async (req: Request, res: Response) => {
 
 export const TestCaseController = {
   createTestCase,
-  //   getTestCases,
+    getTestCases,
   //   getTestCaseById,
   //   updateTestCase,
   //   deleteTestCase,

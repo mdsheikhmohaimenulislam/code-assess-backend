@@ -16,25 +16,21 @@ router.post(
 );
 
 
-// router.get(
-//   "/problems/:problemId/test-cases",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   TestCaseController.getTestCases
-// );
+router.get(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+  TestCaseController.getTestCases
+);
 
 
-// router.get(
-//   "/test-cases/:id",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   TestCaseController.getTestCaseById
-// );
 
 
-// router.patch(
-//   "/test-cases/:id",
-//   auth(Role.ADMIN, Role.COMPANY),
-//   TestCaseController.updateTestCase
-// );
+
+router.patch(
+  "/test-cases/:id",
+  auth(Role.ADMIN, Role.COMPANY),
+  TestCaseController.updateTestCase
+);
 
 
 // router.delete(

@@ -1,4 +1,5 @@
 
+import type { Prisma } from "../../../generated/prisma/client.js";
 import { ProblemType, Role } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
@@ -66,76 +67,128 @@ const createTestCase = async (
   return testCase;
 };
 
-// // Get all Test Cases of a Problem
-// const getTestCases = async (
-//   userId: string,
-//   userRole: string,
-//   problemId: string
-// ) => {
-//   const problem = await prisma.problem.findUnique({
-//     where: {
-//       id: problemId,
-//     },
-//   });
+// Get all Test Cases of a Problem
+const getTestCase = async (
+  userId: string,
+  userRole: Role,
+  testCaseId: string,
+) => {
+  // ==========================================
+  // 1. Find test case
+  // ==========================================
 
-//   if (!problem) {
-//     throw new Error("Problem not found");
-//   }
+  const testCase = await prisma.testCase.findUnique({
+    where: {
+      id: testCaseId,
+    },
+    select: {
+      id: true,
+      problemId: true,
+      input: true,
+      expectedOutput: true,
+      isHidden: true,
+      createdAt: true,
+      updatedAt: true,
 
-//   // Candidate should not see hidden test cases
-//   const where: Prisma.TestCaseWhereInput = {
-//     problemId,
-//   };
+      problem: {
+        select: {
+          id: true,
+          type: true,
+          createdById: true,
+        },
+      },
+    },
+  });
 
-//   if (userRole === "CANDIDATE") {
-//     where.isHidden = false;
-//   }
+  if (!testCase) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Test case not found",
+    );
+  }
 
-//   const testCases = await prisma.testCase.findMany({
-//     where,
-//     orderBy: {
-//       createdAt: "asc",
-//     },
-//   });
+  // ==========================================
+  // 2. Company can only access own problem
+  // ==========================================
 
-//   return testCases;
-// };
+  if (
+    userRole === Role.COMPANY &&
+    testCase.problem.createdById !== userId
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to view this test case",
+    );
+  }
 
-// // Get single Test Case
-// const getTestCaseById = async (
-//   userId: string,
-//   userRole: string,
-//   id: string
-// ) => {
-//   const testCase = await prisma.testCase.findUnique({
-//     where: {
-//       id,
-//     },
-//     include: {
-//       problem: {
-//         select: {
-//           id: true,
-//           title: true,
-//           createdById: true,
-//         },
-//       },
-//     },
-//   });
+  // ==========================================
+  // 3. Candidate cannot see hidden test case
+  // ==========================================
 
-//   if (!testCase) {
-//     throw new Error("Test case not found");
-//   }
+  if (
+    userRole === Role.CANDIDATE &&
+    testCase.isHidden
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to view this test case",
+    );
+  }
 
-//   // Candidate cannot see hidden test case
-//   if (
-//     userRole === "CANDIDATE" &&
-//     testCase.isHidden
-//   ) {
-//     throw new Error("Test case not found");
-//   }
+  // ==========================================
+  // 4. Hide expected output from candidate
+  // ==========================================
 
-//   return testCase;
-// };
+  if (userRole === Role.CANDIDATE) {
+    return {
+      id: testCase.id,
+      problemId: testCase.problemId,
+      input: testCase.input,
+      isHidden: false,
+      createdAt: testCase.createdAt,
+      updatedAt: testCase.updatedAt,
+    };
+  }
+
+  return testCase;
+};
+
+
+// Get single Test Case
+const getTestCaseById = async (
+  userId: string,
+  userRole: string,
+  id: string
+) => {
+  const testCase = await prisma.testCase.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      problem: {
+        select: {
+          id: true,
+          title: true,
+          createdById: true,
+        },
+      },
+    },
+  });
+
+  if (!testCase) {
+    throw new Error("Test case not found");
+  }
+
+  // Candidate cannot see hidden test case
+  if (
+    userRole === "CANDIDATE" &&
+    testCase.isHidden
+  ) {
+    throw new Error("Test case not found");
+  }
+
+  return testCase;
+};
 
 // // Update Test Case
 // const updateTestCase = async (
@@ -225,8 +278,8 @@ const createTestCase = async (
 
 export const TestCaseService = {
   createTestCase,
-//   getTestCases,
-//   getTestCaseById,
+getTestCase,
+  getTestCaseById,
 //   updateTestCase,
 //   deleteTestCase,
 };

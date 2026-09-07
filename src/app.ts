@@ -50,7 +50,7 @@ app.use("/api/v1/invitations", InvitationRoutes);
 app.use("/api/v1/candidate", CandidateRoutes);
 app.use("/api/v1/attempts", AttemptRoutes);
 app.use("/api/v1/test-cases", TestCaseRoutes);
-app.use("/api/v1/mcq-answers", MCQAnswerRoutes);
+// app.use("/api/v1/mcq-answers", MCQAnswerRoutes);
 
 // Basic route...
 app.get("/", async (req: Request, res: Response) => {
