@@ -25,11 +25,11 @@ router.get(
 );
 
 
-// router.get(
-//   "/:id",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   AttemptController.getAttemptById
-// );
+router.get(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+  AttemptController.getAttemptById
+);
 
 
 // router.post(

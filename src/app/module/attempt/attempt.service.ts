@@ -220,10 +220,7 @@ const getAttempts = async ({
     });
 
     if (!candidate) {
-      throw new AppError(
-        httpStatus.NOT_FOUND,
-        "Candidate profile not found",
-      );
+      throw new AppError(httpStatus.NOT_FOUND, "Candidate profile not found");
     }
 
     where = {
@@ -275,52 +272,52 @@ const getAttempts = async ({
   };
 };
 
-// const getAttemptById = async (
-//   userId: string,
-//   userRole: string,
-//   attemptId: string
-// ) => {
-//   const attempt = await prisma.attempt.findUnique({
-//     where: {
-//       id: attemptId,
-//     },
-//     include: {
-//       assessment: {
-//         select: {
-//           id: true,
-//           title: true,
-//           description: true,
-//           duration: true,
-//           totalMarks: true,
-//           passingMarks: true,
-//           startTime: true,
-//           endTime: true,
-//           status: true,
-//         },
-//       },
-//       candidate: {
-//         select: {
-//           id: true,
-//           userId: true,
-//         },
-//       },
-//     },
-//   });
+const getAttemptById = async (
+  userId: string,
+  userRole: Role,
+  attemptId: string,
+) => {
+  const attempt = await prisma.attempt.findUnique({
+    where: {
+      id: attemptId,
+    },
+    include: {
+      assessment: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          duration: true,
+          totalMarks: true,
+          passingMarks: true,
+          startTime: true,
+          endTime: true,
+          status: true,
+        },
+      },
+      candidate: {
+        select: {
+          id: true,
+          userId: true,
+        },
+      },
+    },
+  });
 
-//   if (!attempt) {
-//     throw new Error("Attempt not found");
-//   }
+  if (!attempt) {
+    throw new AppError(httpStatus.NOT_FOUND, "Attempt not found");
+  }
 
-//   // Candidate অন্য candidate-এর attempt দেখতে পারবে না
-//   if (
-//     userRole === "CANDIDATE" &&
-//     attempt.candidate.userId !== userId
-//   ) {
-//     throw new Error("You are not allowed to view this attempt");
-//   }
 
-//   return attempt;
-// };
+  if (userRole === Role.CANDIDATE && attempt.candidate.userId !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to view this attempt",
+    );
+  }
+
+  return attempt;
+};
 
 // const submitAttempt = async (
 //   userId: string,
@@ -407,7 +404,7 @@ const getAttempts = async ({
 
 export const AttemptService = {
   createAttempt,
-    getAttempts,
-  //   getAttemptById,
+  getAttempts,
+  getAttemptById,
   //   submitAttempt,
 };
