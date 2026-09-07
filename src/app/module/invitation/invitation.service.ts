@@ -1,4 +1,5 @@
-import { AssessmentStatus, Role, UserStatus } from "../../../generated/prisma/enums.js";
+import type { Prisma } from "../../../generated/prisma/client.js";
+import { AssessmentStatus, InvitationStatus, Role, UserStatus } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import type { CreateInvitationPayload } from "./invitation.interface.js";
@@ -215,159 +216,215 @@ const createInvitation = async (
   return invitation;
 };
 
-// const getInvitations = async (
-//   userId: string,
-//   userRole: Role,
-//   query: Record<string, unknown>
-// ) => {
-//   const page = Number(query.page) || 1;
-//   const limit = Number(query.limit) || 10;
+const getInvitations = async (
+  userId: string,
+  userRole: Role,
+  query: Record<string, unknown>,
+) => {
+  /**
+   * Pagination
+   */
+  const page = Math.max(Number(query.page) || 1, 1);
+  const limit = Math.min(
+    Math.max(Number(query.limit) || 10, 1),
+    100,
+  );
 
-//   const skip = (page - 1) * limit;
+  const skip = (page - 1) * limit;
 
-//   const status = query.status as
-//     | "PENDING"
-//     | "ACCEPTED"
-//     | "REJECTED"
-//     | "EXPIRED"
-//     | undefined;
+  /**
+   * Status filter
+   */
+  const status = query.status;
 
-//   const where: Prisma.InvitationWhereInput = {};
+  const validStatuses: InvitationStatus[] = [
+    InvitationStatus.PENDING,
+    InvitationStatus.ACCEPTED,
+    InvitationStatus.REJECTED,
+    InvitationStatus.EXPIRED,
+  ];
 
-//   /**
-//    * Candidate sees own invitations
-//    */
-//   if (userRole === Role.CANDIDATE) {
-//     where.userId = userId;
-//   }
+  if (
+    status !== undefined &&
+    (typeof status !== "string" ||
+      !validStatuses.includes(
+        status as InvitationStatus,
+      ))
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Invalid invitation status",
+    );
+  }
 
-//   /**
-//    * COMPANY sees invitations
-//    * for its own assessments
-//    */
-//   if (userRole === Role.COMPANY) {
-//     where.assessment = {
-//       company: {
-//         userId,
-//       },
-//     };
-//   }
+  /**
+   * Base filter
+   */
+  const where: Prisma.InvitationWhereInput = {};
 
-//   /**
-//    * Filter by status
-//    */
-//   if (status) {
-//     where.status = status;
-//   }
+  /**
+   * Candidate sees only own invitations
+   */
+  if (userRole === Role.CANDIDATE) {
+    where.userId = userId;
+  }
 
-//   const [data, total] = await Promise.all([
-//     prisma.invitation.findMany({
-//       where,
-//       skip,
-//       take: limit,
-//       orderBy: {
-//         createdAt: "desc",
-//       },
-//       include: {
-//         assessment: {
-//           select: {
-//             id: true,
-//             title: true,
-//             duration: true,
-//             startTime: true,
-//             endTime: true,
-//             status: true,
-//           },
-//         },
-//         candidate: true,
-//         user: {
-//           select: {
-//             id: true,
-//             name: true,
-//             email: true,
-//             status: true,
-//           },
-//         },
-//       },
-//     }),
+  /**
+   * Company sees invitations
+   * for its own assessments
+   */
+  if (userRole === Role.COMPANY) {
+    where.assessment = {
+      company: {
+        userId,
+      },
+    };
+  }
 
-//     prisma.invitation.count({
-//       where,
-//     }),
-//   ]);
+  /**
+   * Filter by status
+   */
+  if (status) {
+    where.status = status as InvitationStatus;
+  }
 
-//   return {
-//     data,
-//     meta: {
-//       page,
-//       limit,
-//       total,
-//       totalPages: Math.ceil(total / limit),
-//     },
-//   };
-// };
+  /**
+   * Get invitations + total count
+   */
+  const [data, total] = await Promise.all([
+    prisma.invitation.findMany({
+      where,
+      skip,
+      take: limit,
 
-// const getInvitationById = async (
-//   userId: string,
-//   userRole: Role,
-//   invitationId: string
-// ) => {
-//   const invitation =
-//     await prisma.invitation.findUnique({
-//       where: {
-//         id: invitationId,
-//       },
-//       include: {
-//         assessment: {
-//           include: {
-//             company: true,
-//           },
-//         },
-//         candidate: true,
-//         user: {
-//           select: {
-//             id: true,
-//             name: true,
-//             email: true,
-//             role: true,
-//             status: true,
-//           },
-//         },
-//       },
-//     });
+      orderBy: {
+        createdAt: "desc",
+      },
 
-//   if (!invitation) {
-//     throw new ApiError(404, "Invitation not found");
-//   }
+      select: {
+        id: true,
+        assessmentId: true,
+        candidateId: true,
+        userId: true,
+        email: true,
+        status: true,
+        expiresAt: true,
+        createdAt: true,
+        updatedAt: true,
 
-//   /**
-//    * Candidate can only see own invitation
-//    */
-//   if (
-//     userRole === Role.CANDIDATE &&
-//     invitation.userId !== userId
-//   ) {
-//     throw new ApiError(
-//       403,
-//       "You are not allowed to view this invitation"
-//     );
-//   }
+        assessment: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            duration: true,
+            startTime: true,
+            endTime: true,
+            status: true,
+          },
+        },
 
-//   /**
-//    * COMPANY can only see own assessment invitations
-//    */
-//   if (
-//     userRole === Role.COMPANY &&
-//     invitation.assessment.company.userId !== userId
-//   ) {
-//     throw new ApiError(
-//       403,
-//       "You are not allowed to view this invitation"
-//     );
-//   }
+        candidate: {
+          select: {
+            id: true,
+            userId: true,
+            phone: true,
+            bio: true,
+            githubUrl: true,
+            linkedinUrl: true,
+            resumeUrl: true,
+          },
+        },
 
-//   return invitation;
-// };
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+          },
+        },
+      },
+    }),
+
+    prisma.invitation.count({
+      where,
+    }),
+  ]);
+
+  return {
+    data,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+const getInvitationById = async (
+  userId: string,
+  userRole: Role,
+  invitationId: string
+) => {
+  const invitation =
+    await prisma.invitation.findUnique({
+      where: {
+        id: invitationId,
+      },
+      include: {
+        assessment: {
+          include: {
+            company: true,
+          },
+        },
+        candidate: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+  if (!invitation) {
+    throw new ApiError(404, "Invitation not found");
+  }
+
+  /**
+   * Candidate can only see own invitation
+   */
+  if (
+    userRole === Role.CANDIDATE &&
+    invitation.userId !== userId
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to view this invitation"
+    );
+  }
+
+  /**
+   * COMPANY can only see own assessment invitations
+   */
+  if (
+    userRole === Role.COMPANY &&
+    invitation.assessment.company.userId !== userId
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to view this invitation"
+    );
+  }
+
+  return invitation;
+};
 
 // const acceptInvitation = async (
 //   userId: string,
@@ -579,8 +636,8 @@ const createInvitation = async (
 
 export const InvitationService = {
   createInvitation,
-  //   getInvitations,
-  //   getInvitationById,
+    getInvitations,
+    getInvitationById,
   //   acceptInvitation,
   //   rejectInvitation,
   //   deleteInvitation,

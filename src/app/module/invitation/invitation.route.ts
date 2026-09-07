@@ -16,18 +16,18 @@ router.post(
   InvitationController.createInvitation,
 );
 
-// router.get(
-//   "/",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   InvitationController.getInvitations
-// );
+router.get(
+  "/",
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+  InvitationController.getInvitations
+);
 
 
-// router.get(
-//   "/:id",
-//   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-//   InvitationController.getInvitationById
-// );
+router.get(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+  InvitationController.getInvitationById
+);
 
 
 // router.patch(
