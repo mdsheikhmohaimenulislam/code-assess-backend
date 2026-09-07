@@ -78,39 +78,57 @@ const getInvitationById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const acceptInvitation = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
+const acceptInvitation = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
 
-//     const result = await InvitationService.acceptInvitation(
-//       userId,
-//       req.params.id
-//     );
+  if (!userId) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+  }
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Invitation accepted successfully",
-//       data: result,
-//     });
-//   }
-// );
+  const invitationId = req.params.id;
 
-// const rejectInvitation = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
+  if (!invitationId) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invitation ID is required");
+  }
 
-//     const result = await InvitationService.rejectInvitation(
-//       userId,
-//       req.params.id
-//     );
+  const result = await InvitationService.acceptInvitation(
+    userId,
+    invitationId as string,
+  );
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Invitation rejected successfully",
-//       data: result,
-//     });
-//   }
-// );
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Invitation accepted successfully",
+    data: result,
+  });
+});
+
+const rejectInvitation = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+  }
+
+  const invitationId = req.params.id;
+
+  if (!invitationId) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invitation ID is required");
+  }
+
+  const result = await InvitationService.rejectInvitation(
+    userId,
+    invitationId as string,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Invitation rejected successfully",
+    data: result,
+  });
+});
 
 // const deleteInvitation = catchAsync(
 //   async (req: Request, res: Response) => {
@@ -135,7 +153,7 @@ export const InvitationController = {
   createInvitation,
   getInvitations,
   getInvitationById,
-  //   acceptInvitation,
-  //   rejectInvitation,
+  acceptInvitation,
+  rejectInvitation,
   //   deleteInvitation,
 };

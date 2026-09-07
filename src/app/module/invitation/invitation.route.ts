@@ -30,18 +30,17 @@ router.get(
 );
 
 
-// router.patch(
-//   "/:id/accept",
-//   auth(Role.CANDIDATE),
-//   InvitationController.acceptInvitation
-// );
+router.patch(
+  "/accept/:id",
+  auth(Role.CANDIDATE),
+  InvitationController.acceptInvitation,
+);
 
-
-// router.patch(
-//   "/:id/reject",
-//   auth(Role.CANDIDATE),
-//   InvitationController.rejectInvitation
-// );
+router.patch(
+  "/reject/:id",
+  auth(Role.CANDIDATE),
+  InvitationController.rejectInvitation,
+);
 
 
 // router.delete(

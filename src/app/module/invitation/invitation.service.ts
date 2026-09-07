@@ -1,5 +1,10 @@
 import type { Prisma } from "../../../generated/prisma/client.js";
-import { AssessmentStatus, InvitationStatus, Role, UserStatus } from "../../../generated/prisma/enums.js";
+import {
+  AssessmentStatus,
+  InvitationStatus,
+  Role,
+  UserStatus,
+} from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import type { CreateInvitationPayload } from "./invitation.interface.js";
@@ -19,40 +24,33 @@ const createInvitation = async (
   } = payload;
 
   // Check assessment
-  const assessment =
-    await prisma.assessment.findUnique({
-      where: {
-        id: assessmentId,
-      },
-      select: {
-        id: true,
-        title: true,
-        duration: true,
-        startTime: true,
-        endTime: true,
-        status: true,
+  const assessment = await prisma.assessment.findUnique({
+    where: {
+      id: assessmentId,
+    },
+    select: {
+      id: true,
+      title: true,
+      duration: true,
+      startTime: true,
+      endTime: true,
+      status: true,
 
-        company: {
-          select: {
-            userId: true,
-          },
+      company: {
+        select: {
+          userId: true,
         },
       },
-    });
+    },
+  });
 
   if (!assessment) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      "Assessment not found",
-    );
+    throw new AppError(httpStatus.NOT_FOUND, "Assessment not found");
   }
 
   // ADMIN can manage any assessment
   // COMPANY can manage only own assessment
-  if (
-    userRole === Role.COMPANY &&
-    assessment.company.userId !== userId
-  ) {
+  if (userRole === Role.COMPANY && assessment.company.userId !== userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       "You are not allowed to manage this assessment",
@@ -71,25 +69,21 @@ const createInvitation = async (
   }
 
   // Check candidate user
-  const candidateUser =
-    await prisma.user.findUnique({
-      where: {
-        id: candidateUserId,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        status: true,
-      },
-    });
+  const candidateUser = await prisma.user.findUnique({
+    where: {
+      id: candidateUserId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+    },
+  });
 
   if (!candidateUser) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      "Candidate user not found",
-    );
+    throw new AppError(httpStatus.NOT_FOUND, "Candidate user not found");
   }
 
   // User must be a candidate
@@ -109,22 +103,18 @@ const createInvitation = async (
   }
 
   // Check candidate profile
-  const candidate =
-    await prisma.candidateProfile.findUnique({
-      where: {
-        id: candidateId,
-      },
-      select: {
-        id: true,
-        userId: true,
-      },
-    });
+  const candidate = await prisma.candidateProfile.findUnique({
+    where: {
+      id: candidateId,
+    },
+    select: {
+      id: true,
+      userId: true,
+    },
+  });
 
   if (!candidate) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      "Candidate profile not found",
-    );
+    throw new AppError(httpStatus.NOT_FOUND, "Candidate profile not found");
   }
 
   // Candidate profile must belong to candidate user
@@ -136,10 +126,7 @@ const createInvitation = async (
   }
 
   // Email must match candidate account
-  if (
-    candidateUser.email.toLowerCase() !==
-    email.toLowerCase()
-  ) {
+  if (candidateUser.email.toLowerCase() !== email.toLowerCase()) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       "Email does not match candidate account",
@@ -147,18 +134,17 @@ const createInvitation = async (
   }
 
   // Check duplicate invitation
-  const existingInvitation =
-    await prisma.invitation.findUnique({
-      where: {
-        assessmentId_candidateId: {
-          assessmentId,
-          candidateId,
-        },
+  const existingInvitation = await prisma.invitation.findUnique({
+    where: {
+      assessmentId_candidateId: {
+        assessmentId,
+        candidateId,
       },
-      select: {
-        id: true,
-      },
-    });
+    },
+    select: {
+      id: true,
+    },
+  });
 
   if (existingInvitation) {
     throw new AppError(
@@ -168,50 +154,49 @@ const createInvitation = async (
   }
 
   // Create invitation
-  const invitation =
-    await prisma.invitation.create({
-      data: {
-        assessmentId,
-        candidateId,
-        userId: candidateUserId,
-        email: candidateUser.email,
+  const invitation = await prisma.invitation.create({
+    data: {
+      assessmentId,
+      candidateId,
+      userId: candidateUserId,
+      email: candidateUser.email,
 
-        // Dynamic expiration date
-        ...(expiresAt && { expiresAt }),
-      },
+      // Dynamic expiration date
+      ...(expiresAt && { expiresAt }),
+    },
 
-      select: {
-        id: true,
-        assessmentId: true,
-        candidateId: true,
-        userId: true,
-        email: true,
-        status: true,
-        expiresAt: true,
-        createdAt: true,
+    select: {
+      id: true,
+      assessmentId: true,
+      candidateId: true,
+      userId: true,
+      email: true,
+      status: true,
+      expiresAt: true,
+      createdAt: true,
 
-        assessment: {
-          select: {
-            id: true,
-            title: true,
-            duration: true,
-            startTime: true,
-            endTime: true,
-            status: true,
-          },
-        },
-
-        candidate: true,
-
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+      assessment: {
+        select: {
+          id: true,
+          title: true,
+          duration: true,
+          startTime: true,
+          endTime: true,
+          status: true,
         },
       },
-    });
+
+      candidate: true,
+
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
 
   return invitation;
 };
@@ -225,10 +210,7 @@ const getInvitations = async (
    * Pagination
    */
   const page = Math.max(Number(query.page) || 1, 1);
-  const limit = Math.min(
-    Math.max(Number(query.limit) || 10, 1),
-    100,
-  );
+  const limit = Math.min(Math.max(Number(query.limit) || 10, 1), 100);
 
   const skip = (page - 1) * limit;
 
@@ -247,14 +229,9 @@ const getInvitations = async (
   if (
     status !== undefined &&
     (typeof status !== "string" ||
-      !validStatuses.includes(
-        status as InvitationStatus,
-      ))
+      !validStatuses.includes(status as InvitationStatus))
   ) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "Invalid invitation status",
-    );
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid invitation status");
   }
 
   /**
@@ -369,71 +346,64 @@ const getInvitationById = async (
   userRole: Role,
   invitationId: string,
 ) => {
-  const invitation =
-    await prisma.invitation.findUnique({
-      where: {
-        id: invitationId,
-      },
+  const invitation = await prisma.invitation.findUnique({
+    where: {
+      id: invitationId,
+    },
 
-      include: {
-        assessment: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            duration: true,
-            startTime: true,
-            endTime: true,
-            status: true,
+    include: {
+      assessment: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          duration: true,
+          startTime: true,
+          endTime: true,
+          status: true,
 
-            company: {
-              select: {
-                id: true,
-                userId: true,
-                companyName: true,
-              },
+          company: {
+            select: {
+              id: true,
+              userId: true,
+              companyName: true,
             },
           },
         },
+      },
 
-        candidate: {
-          select: {
-            id: true,
-            userId: true,
-            phone: true,
-            bio: true,
-            githubUrl: true,
-            linkedinUrl: true,
-            resumeUrl: true,
-          },
-        },
-
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            status: true,
-          },
+      candidate: {
+        select: {
+          id: true,
+          userId: true,
+          phone: true,
+          bio: true,
+          githubUrl: true,
+          linkedinUrl: true,
+          resumeUrl: true,
         },
       },
-    });
+
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          status: true,
+        },
+      },
+    },
+  });
 
   if (!invitation) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      "Invitation not found",
-    );
+    throw new AppError(httpStatus.NOT_FOUND, "Invitation not found");
   }
 
   /**
    * Candidate can only view own invitation
    */
-  if (
-    userRole === Role.CANDIDATE &&
-    invitation.userId !== userId
-  ) {
+  if (userRole === Role.CANDIDATE && invitation.userId !== userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       "You are not allowed to view this invitation",
@@ -457,155 +427,194 @@ const getInvitationById = async (
   return invitation;
 };
 
-// const acceptInvitation = async (
-//   userId: string,
-//   invitationId: string
-// ) => {
-//   const invitation =
-//     await prisma.invitation.findUnique({
-//       where: {
-//         id: invitationId,
-//       },
-//       include: {
-//         assessment: true,
-//       },
-//     });
+const acceptInvitation = async (userId: string, invitationId: string) => {
+  /**
+   * Find invitation
+   */
+  const invitation = await prisma.invitation.findUnique({
+    where: {
+      id: invitationId,
+    },
 
-//   if (!invitation) {
-//     throw new ApiError(404, "Invitation not found");
-//   }
+    select: {
+      id: true,
+      userId: true,
+      status: true,
+      expiresAt: true,
 
-//   /**
-//    * Only invited candidate can accept
-//    */
-//   if (invitation.userId !== userId) {
-//     throw new ApiError(
-//       403,
-//       "You are not allowed to accept this invitation"
-//     );
-//   }
+      assessment: {
+        select: {
+          id: true,
+          title: true,
+          duration: true,
+          startTime: true,
+          endTime: true,
+          status: true,
+        },
+      },
+    },
+  });
 
-//   /**
-//    * Check status
-//    */
-//   if (invitation.status !== "PENDING") {
-//     throw new ApiError(
-//       400,
-//       `Invitation is already ${invitation.status.toLowerCase()}`
-//     );
-//   }
+  if (!invitation) {
+    throw new AppError(httpStatus.NOT_FOUND, "Invitation not found");
+  }
 
-//   /**
-//    * Check expiration
-//    */
-//   if (
-//     invitation.expiresAt &&
-//     invitation.expiresAt <= new Date()
-//   ) {
-//     await prisma.invitation.update({
-//       where: {
-//         id: invitationId,
-//       },
-//       data: {
-//         status: "EXPIRED",
-//       },
-//     });
+  /**
+   * Only invited candidate can accept
+   */
+  if (invitation.userId !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to accept this invitation",
+    );
+  }
 
-//     throw new ApiError(
-//       400,
-//       "This invitation has expired"
-//     );
-//   }
+  /**
+   * Invitation must be pending
+   */
+  if (invitation.status !== InvitationStatus.PENDING) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Invitation is already ${invitation.status.toLowerCase()}`,
+    );
+  }
 
-//   /**
-//    * Assessment must still be available
-//    */
-//   if (
-//     invitation.assessment.status === "CANCELLED" ||
-//     invitation.assessment.status === "COMPLETED"
-//   ) {
-//     throw new ApiError(
-//       400,
-//       "This assessment is no longer available"
-//     );
-//   }
+  /**
+   * Check expiration
+   */
+  if (invitation.expiresAt && invitation.expiresAt <= new Date()) {
+    await prisma.invitation.update({
+      where: {
+        id: invitationId,
+      },
 
-//   /**
-//    * Accept
-//    */
-//   const result = await prisma.invitation.update({
-//     where: {
-//       id: invitationId,
-//     },
-//     data: {
-//       status: "ACCEPTED",
-//     },
-//     include: {
-//       assessment: {
-//         select: {
-//           id: true,
-//           title: true,
-//           duration: true,
-//           startTime: true,
-//           endTime: true,
-//           status: true,
-//         },
-//       },
-//     },
-//   });
+      data: {
+        status: InvitationStatus.EXPIRED,
+      },
+    });
 
-//   return result;
-// };
+    throw new AppError(httpStatus.BAD_REQUEST, "This invitation has expired");
+  }
 
-// const rejectInvitation = async (
-//   userId: string,
-//   invitationId: string
-// ) => {
-//   const invitation =
-//     await prisma.invitation.findUnique({
-//       where: {
-//         id: invitationId,
-//       },
-//     });
+  /**
+   * Assessment must still be available
+   */
+  if (
+    invitation.assessment.status === AssessmentStatus.CANCELLED ||
+    invitation.assessment.status === AssessmentStatus.COMPLETED
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "This assessment is no longer available",
+    );
+  }
 
-//   if (!invitation) {
-//     throw new ApiError(404, "Invitation not found");
-//   }
+  /**
+   * Accept invitation
+   */
+  const result = await prisma.invitation.update({
+    where: {
+      id: invitationId,
+    },
 
-//   /**
-//    * Only invited candidate can reject
-//    */
-//   if (invitation.userId !== userId) {
-//     throw new ApiError(
-//       403,
-//       "You are not allowed to reject this invitation"
-//     );
-//   }
+    data: {
+      status: InvitationStatus.ACCEPTED,
+    },
 
-//   /**
-//    * Must be pending
-//    */
-//   if (invitation.status !== "PENDING") {
-//     throw new ApiError(
-//       400,
-//       `Invitation is already ${invitation.status.toLowerCase()}`
-//     );
-//   }
+    select: {
+      id: true,
+      assessmentId: true,
+      candidateId: true,
+      userId: true,
+      email: true,
+      status: true,
+      expiresAt: true,
+      createdAt: true,
+      updatedAt: true,
 
-//   /**
-//    * Reject
-//    */
-//   const result = await prisma.invitation.update({
-//     where: {
-//       id: invitationId,
-//     },
-//     data: {
-//       status: "REJECTED",
-//     },
-//   });
+      assessment: {
+        select: {
+          id: true,
+          title: true,
+          duration: true,
+          startTime: true,
+          endTime: true,
+          status: true,
+        },
+      },
+    },
+  });
 
-//   return result;
-// };
+  return result;
+};
+
+const rejectInvitation = async (userId: string, invitationId: string) => {
+  /**
+   * Find invitation
+   */
+  const invitation = await prisma.invitation.findUnique({
+    where: {
+      id: invitationId,
+    },
+
+    select: {
+      id: true,
+      userId: true,
+      status: true,
+    },
+  });
+
+  if (!invitation) {
+    throw new AppError(httpStatus.NOT_FOUND, "Invitation not found");
+  }
+
+  /**
+   * Only invited candidate can reject
+   */
+  if (invitation.userId !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to reject this invitation",
+    );
+  }
+
+  /**
+   * Invitation must be pending
+   */
+  if (invitation.status !== InvitationStatus.PENDING) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Invitation is already ${invitation.status.toLowerCase()}`,
+    );
+  }
+
+  /**
+   * Reject invitation
+   */
+  const result = await prisma.invitation.update({
+    where: {
+      id: invitationId,
+    },
+
+    data: {
+      status: InvitationStatus.REJECTED,
+    },
+
+    select: {
+      id: true,
+      assessmentId: true,
+      candidateId: true,
+      userId: true,
+      email: true,
+      status: true,
+      expiresAt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return result;
+};
 
 // const deleteInvitation = async (
 //   userId: string,
@@ -667,9 +676,9 @@ const getInvitationById = async (
 
 export const InvitationService = {
   createInvitation,
-    getInvitations,
-    getInvitationById,
-  //   acceptInvitation,
-  //   rejectInvitation,
+  getInvitations,
+  getInvitationById,
+  acceptInvitation,
+  rejectInvitation,
   //   deleteInvitation,
 };
