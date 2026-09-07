@@ -1,0 +1,16 @@
+model MCQOption {
+  id        String  @id @default(uuid())
+  problemId String
+  text      String
+  isCorrect Boolean @default(false)
+
+  problem Problem @relation( fields: [problemId], references: [id], onDelete: Cascade)
+
+  answers MCQAnswer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([problemId])
+  @@map("mcq_options")
+}

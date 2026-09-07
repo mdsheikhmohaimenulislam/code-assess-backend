@@ -15,7 +15,7 @@ model Attempt {
   candidate  CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+mcqAnswers MCQAnswer[]
   submissions Submission[]
   result      Result?
 

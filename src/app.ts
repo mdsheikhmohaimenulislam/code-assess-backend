@@ -20,6 +20,8 @@ import { AssessmentProblemRoutes } from "./app/module/AssessmentProblem/assessme
 import { InvitationRoutes } from "./app/module/invitation/invitation.route.js";
 import { CandidateRoutes } from "./app/module/candidate/candidate.route.js";
 import { AttemptRoutes } from "./app/module/attempt/attempt.route.js";
+import { TestCaseRoutes } from "./app/module/testCase/testCase.route.js";
+import { MCQAnswerRoutes } from "./app/module/MCQOption/mcqAnswer.route.js";
 
 const app: Application = express();
 
@@ -43,13 +45,12 @@ app.use("/api/v1/users", userRoute);
 app.use("/api/v1/problem", problemRoute);
 app.use("/api/v1/assessment", AssessmentRoutes);
 app.use("/api/v1/company", CompanyRoutes);
-app.use("/api/v1/assessment-problem",AssessmentProblemRoutes);
+app.use("/api/v1/assessment-problem", AssessmentProblemRoutes);
 app.use("/api/v1/invitations", InvitationRoutes);
 app.use("/api/v1/candidate", CandidateRoutes);
 app.use("/api/v1/attempts", AttemptRoutes);
-
-
-
+app.use("/api/v1/test-cases", TestCaseRoutes);
+app.use("/api/v1/mcq-answers", MCQAnswerRoutes);
 
 // Basic route...
 app.get("/", async (req: Request, res: Response) => {

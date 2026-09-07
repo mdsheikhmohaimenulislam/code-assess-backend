@@ -1,14 +1,13 @@
-// POST   /api/problems/:problemId/test-cases
-// GET    /api/problems/:problemId/test-cases
-// GET    /api/test-cases/:id
-// PATCH  /api/test-cases/:id
-// DELETE /api/test-cases/:id
+export interface CreateTestCasePayload {
+  input: string;
+  expectedOutput: string;
+  isHidden?: boolean;
+}
 
 
+export interface UpdateTestCasePayload {
+  input?: string;
+  expectedOutput?: string;
+  isHidden?: boolean;
+}
 
-
-// createTestCase()
-// getTestCases()
-// getTestCaseById()
-// updateTestCase()
-// deleteTestCase()

@@ -1,7 +1,8 @@
 import type { Prisma } from "../../../generated/prisma/client.js";
-import { Difficulty, Role } from "../../../generated/prisma/enums.js";
+import { ProblemType, Role } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
+import httpStatus from "http-status";
 import type {
   ICreateProblemPayload,
   IGetProblemsQuery,
@@ -12,38 +13,148 @@ const createProblem = async (
   userId: string,
   payload: ICreateProblemPayload,
 ) => {
-  const user = await prisma.user.findFirst({
-    where: {
-      id: userId,
-      isDeleted: false,
-      deletedAt: null,
-      status: "ACTIVE",
-    },
-  });
+  const {
+    title,
+    description,
+    type,
+    difficulty,
+    category,
+    inputFormat,
+    outputFormat,
+    constraints,
+    timeLimit,
+    memoryLimit,
+    options,
+  } = payload;
 
-  if (!user) {
-    throw new AppError(404, "User not found or inactive");
+  // MCQ Validation
+
+  // MCQ feature future এ enable করার জন্য
+  // এই validation রেখে দেওয়া হলো.
+
+  // if (type === ProblemType.MCQ) {
+  //   if (!options || options.length < 2) {
+  //     throw new AppError(
+  //       httpStatus.BAD_REQUEST,
+  //       "MCQ must have at least 2 options",
+  //     );
+  //   }
+
+  //   const correctOptions = options.filter(
+  //     (option) => option.isCorrect,
+  //   );
+
+  //   if (correctOptions.length !== 1) {
+  //     throw new AppError(
+  //       httpStatus.BAD_REQUEST,
+  //       "MCQ must have exactly one correct answer",
+  //     );
+  //   }
+  // }
+
+  // ==========================================
+  // Coding Validation
+  // ==========================================
+
+  if (type === ProblemType.CODING && options) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Options are only allowed for MCQ problems",
+    );
   }
 
-  const problem = await prisma.problem.create({
-    data: {
-      title: payload.title,
-      description: payload.description,
-      type: payload.type,
-      difficulty: payload.difficulty ?? Difficulty.EASY,
-      category: payload.category,
+  // ==========================================
+  // Currently Only Coding Problems Allowed
+  // ==========================================
 
-      inputFormat: payload.inputFormat ?? null,
-      outputFormat: payload.outputFormat ?? null,
-      constraints: payload.constraints ?? null,
-      timeLimit: payload.timeLimit ?? null,
-      memoryLimit: payload.memoryLimit ?? null,
+  if (type !== ProblemType.CODING) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Only coding problems are allowed at this time",
+    );
+  }
 
-      createdById: userId,
+  // ==========================================
+  // Create Problem + MCQ Options
+  // ==========================================
+
+  const problem = await prisma.$transaction(async (tx) => {
+    // ----------------------------------------
+    // Create Problem
+    // ----------------------------------------
+
+    const createdProblem = await tx.problem.create({
+      data: {
+        title,
+        description,
+        type,
+        category,
+
+        ...(difficulty && {
+          difficulty,
+        }),
+
+        ...(inputFormat && {
+          inputFormat,
+        }),
+
+        ...(outputFormat && {
+          outputFormat,
+        }),
+
+        ...(constraints && {
+          constraints,
+        }),
+
+        ...(timeLimit !== undefined && {
+          timeLimit,
+        }),
+
+        ...(memoryLimit !== undefined && {
+          memoryLimit,
+        }),
+
+        createdById: userId,
+      },
+    });
+
+    // ========================================
+    // Create MCQ Options
+    // ========================================
+    // Future এ MCQ enable করলে এই অংশ কাজ করবে.
+    // বর্তমানে উপরের restriction এর কারণে
+    // MCQ এখানে আসতে পারবে না.
+
+    // if (
+    //   type === ProblemType.MCQ &&
+    //   options &&
+    //   options.length > 0
+    // ) {
+    //   await tx.mCQOption.createMany({
+    //     data: options.map((option) => ({
+    //       problemId: createdProblem.id,
+    //       text: option.text,
+    //       isCorrect: option.isCorrect,
+    //     })),
+    //   });
+    // }
+
+    return createdProblem;
+  });
+
+  // Return Problem + MCQ Options
+
+  const result = await prisma.problem.findUnique({
+    where: {
+      id: problem.id,
+    },
+
+    include: {
+      mcqOptions: true,
     },
   });
 
-  return problem;
+  return result;
 };
 
 const getProblems = async (query: IGetProblemsQuery) => {
@@ -297,14 +408,8 @@ const deleteProblem = async (
   }
 
   // COMPANY can delete only own problem
-  if (
-    userRole === Role.COMPANY &&
-    existingProblem.createdById !== userId
-  ) {
-    throw new AppError(
-      403,
-      "You can only delete your own problem",
-    );
+  if (userRole === Role.COMPANY && existingProblem.createdById !== userId) {
+    throw new AppError(403, "You can only delete your own problem");
   }
 
   await prisma.problem.delete({

@@ -4,25 +4,31 @@ import { ProblemService } from "./problem.service.js";
 import { AppError } from "../../utils/AppError.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import httpStatus from "http-status";
-import { Role } from "../../../generated/prisma/enums.js";
-import { prisma } from "../../lib/prisma.js";
 
-const createProblem = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
+const createProblem = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
 
-  if (!userId) {
-    throw new AppError(401, "Unauthorized");
-  }
+    if (!userId) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-  const result = await ProblemService.createProblem(userId, req.body);
+    const result = await ProblemService.createProblem(
+      userId,
+      req.body,
+    );
 
-  sendResponse(res, {
-    statusCode: httpStatus.CREATED,
-    success: true,
-    message: "Problem created successfully",
-    data: result,
-  });
-});
+    sendResponse(res, {
+      statusCode: httpStatus.CREATED,
+      success: true,
+      message: "Problem created successfully",
+      data: result,
+    });
+  },
+);
 
 const getProblems = catchAsync(async (req: Request, res: Response) => {
   const result = await ProblemService.getProblems(req.query);

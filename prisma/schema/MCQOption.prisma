@@ -1,0 +1,25 @@
+model MCQAnswer {
+  id               String @id @default(uuid())
+  attemptId        String
+  problemId        String
+  selectedOptionId String
+
+  isCorrect   Boolean @default(false)
+  marksAwarded Float @default(0)
+
+  attempt        Attempt   @relation(fields: [attemptId],references: [id],onDelete: Cascade)
+
+  problem Problem @relation(fields: [problemId],references: [id],onDelete: Cascade)
+
+  selectedOption MCQOption @relation( fields: [selectedOptionId],references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([attemptId, problemId])
+  @@index([attemptId])
+  @@index([problemId])
+  @@index([selectedOptionId])
+
+  @@map("mcq_answers")
+}

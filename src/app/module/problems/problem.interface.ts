@@ -1,5 +1,11 @@
 import type { Difficulty, ProblemType } from "../../../generated/prisma/enums.js";
 
+
+interface IMCQOptionPayload {
+  text: string;
+  isCorrect: boolean;
+}
+
 export interface ICreateProblemPayload {
   title: string;
   description: string;
@@ -11,6 +17,7 @@ export interface ICreateProblemPayload {
   constraints?: string;
   timeLimit?: number;
   memoryLimit?: number;
+  options?: IMCQOptionPayload[];
 }
 
 

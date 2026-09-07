@@ -49,7 +49,6 @@ enum Difficulty {
 enum ProblemType {
   MCQ
   CODING
-  WRITTEN
 }
 
 enum SubmissionStatus {

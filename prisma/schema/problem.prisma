@@ -15,6 +15,9 @@ model Problem {
   createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
   testCases          TestCase[]
+  mcqOptions         MCQOption[]
+ mcqAnswers MCQAnswer[]
+
   assessmentProblems AssessmentProblem[]
   submissions        Submission[]
 
