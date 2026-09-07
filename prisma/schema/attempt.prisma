@@ -1,10 +1,13 @@
 model Attempt {
   id           String        @id @default(uuid())
   assessmentId String
-  userId       String        @unique
+  userId       String     
   candidateId  String
+
   startedAt    DateTime      @default(now())
   submittedAt  DateTime?
+    expiresAt    DateTime?
+
   status       AttemptStatus @default(IN_PROGRESS)
   score        Float         @default(0)
 
