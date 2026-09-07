@@ -616,63 +616,63 @@ const rejectInvitation = async (userId: string, invitationId: string) => {
   return result;
 };
 
-// const deleteInvitation = async (
-//   userId: string,
-//   userRole: Role,
-//   invitationId: string
-// ) => {
-//   const invitation =
-//     await prisma.invitation.findUnique({
-//       where: {
-//         id: invitationId,
-//       },
-//       include: {
-//         assessment: {
-//           include: {
-//             company: true,
-//           },
-//         },
-//       },
-//     });
+const deleteInvitation = async (
+  userId: string,
+  userRole: Role,
+  invitationId: string,
+) => {
+  const invitation =
+    await prisma.invitation.findUnique({
+      where: {
+        id: invitationId,
+      },
+      include: {
+        assessment: {
+          include: {
+            company: true,
+          },
+        },
+      },
+    });
 
-//   if (!invitation) {
-//     throw new ApiError(404, "Invitation not found");
-//   }
+  if (!invitation) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Invitation not found",
+    );
+  }
 
-//   /**
-//    * COMPANY can delete only own invitation
-//    */
-//   if (
-//     userRole === Role.COMPANY &&
-//     invitation.assessment.company.userId !== userId
-//   ) {
-//     throw new ApiError(
-//       403,
-//       "You are not allowed to delete this invitation"
-//     );
-//   }
+  /**
+   * COMPANY can delete only own invitation
+   */
+  if (
+    userRole === Role.COMPANY &&
+    invitation.assessment.company.userId !== userId
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to delete this invitation",
+    );
+  }
 
-//   /**
-//    * Only pending invitation can be deleted
-//    */
-//   if (invitation.status !== "PENDING") {
-//     throw new ApiError(
-//       400,
-//       "Only pending invitations can be deleted"
-//     );
-//   }
+  /**
+   * Only pending invitation can be deleted
+   */
+  if (
+    invitation.status !== InvitationStatus.PENDING
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Only pending invitations can be deleted",
+    );
+  }
 
-//   await prisma.invitation.delete({
-//     where: {
-//       id: invitationId,
-//     },
-//   });
-
-//   return {
-//     id: invitationId,
-//     deleted: true,
-//   };
-// };
+  await prisma.invitation.delete({
+    where: {
+      id: invitationId,
+    },
+  });
+};
 
 export const InvitationService = {
   createInvitation,
@@ -680,5 +680,5 @@ export const InvitationService = {
   getInvitationById,
   acceptInvitation,
   rejectInvitation,
-  //   deleteInvitation,
+    deleteInvitation,
 };

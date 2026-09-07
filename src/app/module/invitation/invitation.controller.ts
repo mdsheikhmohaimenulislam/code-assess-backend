@@ -130,24 +130,29 @@ const rejectInvitation = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const deleteInvitation = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const userId = req.user!.userId;
-//     const userRole = req.user!.role;
+const deleteInvitation = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const userRole = req.user?.role;
 
-//     const result = await InvitationService.deleteInvitation(
-//       userId,
-//       userRole,
-//       req.params.id
-//     );
+  if (!userId || !userRole) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+  }
 
-//     res.status(200).json({
-//       success: true,
-//       message: "Invitation deleted successfully",
-//       data: result,
-//     });
-//   }
-// );
+  const invitationId = req.params.id;
+
+  if (!invitationId) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invitation ID is required");
+  }
+
+  await InvitationService.deleteInvitation(userId, userRole, invitationId as string);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Invitation deleted successfully",
+    data: null,
+  });
+});
 
 export const InvitationController = {
   createInvitation,
@@ -155,5 +160,5 @@ export const InvitationController = {
   getInvitationById,
   acceptInvitation,
   rejectInvitation,
-  //   deleteInvitation,
+  deleteInvitation,
 };

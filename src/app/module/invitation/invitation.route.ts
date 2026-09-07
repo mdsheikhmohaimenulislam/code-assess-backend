@@ -43,10 +43,10 @@ router.patch(
 );
 
 
-// router.delete(
-//   "/:id",
-//   auth(Role.ADMIN, Role.COMPANY),
-//   InvitationController.deleteInvitation
-// );
+router.delete(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY),
+  InvitationController.deleteInvitation,
+);
 
 export const InvitationRoutes = router;
