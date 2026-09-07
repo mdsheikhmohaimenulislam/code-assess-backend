@@ -75,29 +75,43 @@ const getAttemptById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const submitAttempt = async (
-//   req: Request,
-//   res: Response
-// ) => {
-//   const userId = req.user!.userId;
+const submitAttempt = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
 
-//   const { id } = req.params;
+    if (!userId) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-//   const result = await AttemptService.submitAttempt(
-//     userId,
-//     id
-//   );
+    const { id } = req.params;
 
-//   res.status(200).json({
-//     success: true,
-//     message: "Assessment submitted successfully",
-//     data: result,
-//   });
-// };
+    if (!id) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Attempt ID is required",
+      );
+    }
+
+    const result = await AttemptService.submitAttempt(
+      userId,
+      id as string,
+    );
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: "Assessment submitted successfully",
+      data: result,
+    });
+  },
+);
+
 
 export const AttemptController = {
   createAttempt,
   getAttempts,
   getAttemptById,
-  //   submitAttempt,
+    submitAttempt,
 };

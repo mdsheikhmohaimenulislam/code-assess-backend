@@ -32,10 +32,10 @@ router.get(
 );
 
 
-// router.post(
-//   "/:id/submit",
-//   auth(Role.CANDIDATE),
-//   AttemptController.submitAttempt
-// );
+router.post(
+  "/submit/:id",
+  auth(Role.CANDIDATE),
+  AttemptController.submitAttempt,
+);
 
 export const AttemptRoutes = router;

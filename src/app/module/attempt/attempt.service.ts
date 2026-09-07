@@ -319,92 +319,131 @@ const getAttemptById = async (
   return attempt;
 };
 
-// const submitAttempt = async (
-//   userId: string,
-//   attemptId: string
-// ) => {
-//   // Candidate profile
-//   const candidate = await prisma.candidateProfile.findUnique({
-//     where: {
-//       userId,
-//     },
-//   });
 
-//   if (!candidate) {
-//     throw new Error("Candidate profile not found");
-//   }
+const submitAttempt = async (
+  userId: string,
+  attemptId: string,
+) => {
+  // 1. Candidate profile
+  const candidate = await prisma.candidateProfile.findUnique({
+    where: {
+      userId,
+    },
+    select: {
+      id: true,
+    },
+  });
 
-//   // Attempt
-//   const attempt = await prisma.attempt.findUnique({
-//     where: {
-//       id: attemptId,
-//     },
-//   });
+  if (!candidate) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Candidate profile not found",
+    );
+  }
 
-//   if (!attempt) {
-//     throw new Error("Attempt not found");
-//   }
+  // 2. Find attempt
+  const attempt = await prisma.attempt.findUnique({
+    where: {
+      id: attemptId,
+    },
+    include: {
+      assessment: {
+        select: {
+          id: true,
+          title: true,
+          totalMarks: true,
+          passingMarks: true,
+        },
+      },
+    },
+  });
 
-//   // Ownership
-//   if (attempt.candidateId !== candidate.id) {
-//     throw new Error(
-//       "You are not allowed to submit this attempt"
-//     );
-//   }
+  if (!attempt) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Attempt not found",
+    );
+  }
 
-//   // Already submitted
-//   if (attempt.status === AttemptStatus.SUBMITTED) {
-//     throw new Error("Attempt has already been submitted");
-//   }
+  // 3. Ownership check
+  if (attempt.candidateId !== candidate.id) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to submit this attempt",
+    );
+  }
 
-//   // Already expired
-//   if (attempt.status === AttemptStatus.EXPIRED) {
-//     throw new Error("Attempt has already expired");
-//   }
+  // 4. Already submitted
+  if (attempt.status === AttemptStatus.SUBMITTED) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      "Attempt has already been submitted",
+    );
+  }
 
-//   const now = new Date();
+  // 5. Already expired
+  if (attempt.status === AttemptStatus.EXPIRED) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Attempt has already expired",
+    );
+  }
 
-//   // Time expired কিনা
-//   if (now > attempt.expiresAt) {
-//     const expiredAttempt = await prisma.attempt.update({
-//       where: {
-//         id: attempt.id,
-//       },
-//       data: {
-//         status: AttemptStatus.EXPIRED,
-//       },
-//     });
+  // 6. Attempt must be in progress
+  if (attempt.status !== AttemptStatus.IN_PROGRESS) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Only an in-progress attempt can be submitted",
+    );
+  }
 
-//     return expiredAttempt;
-//   }
+  const now = new Date();
 
-//   // Submit
-//   const submittedAttempt = await prisma.attempt.update({
-//     where: {
-//       id: attempt.id,
-//     },
-//     data: {
-//       status: AttemptStatus.SUBMITTED,
-//       submittedAt: now,
-//     },
-//     include: {
-//       assessment: {
-//         select: {
-//           id: true,
-//           title: true,
-//           totalMarks: true,
-//           passingMarks: true,
-//         },
-//       },
-//     },
-//   });
+  // 7. Check expiration
+  if (attempt.expiresAt && now >= attempt.expiresAt) {
+    await prisma.attempt.update({
+      where: {
+        id: attempt.id,
+      },
+      data: {
+        status: AttemptStatus.EXPIRED,
+      },
+    });
 
-//   return submittedAttempt;
-// };
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Attempt time has expired",
+    );
+  }
+
+  // 8. Submit attempt
+  const submittedAttempt = await prisma.attempt.update({
+    where: {
+      id: attempt.id,
+    },
+    data: {
+      status: AttemptStatus.SUBMITTED,
+      submittedAt: now,
+    },
+    include: {
+      assessment: {
+        select: {
+          id: true,
+          title: true,
+          totalMarks: true,
+          passingMarks: true,
+        },
+      },
+    },
+  });
+
+  return submittedAttempt;
+};
+
 
 export const AttemptService = {
   createAttempt,
   getAttempts,
   getAttemptById,
-  //   submitAttempt,
+    submitAttempt,
 };
