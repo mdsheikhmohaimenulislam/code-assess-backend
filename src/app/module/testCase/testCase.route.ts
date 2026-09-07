@@ -7,36 +7,29 @@ import { validateRequest } from "../../middlewares/validateRequst.js";
 
 const router = Router();
 
-
 router.post(
   "/problems/:id",
   auth(Role.ADMIN, Role.COMPANY),
-    validateRequest(createTestCaseValidationSchema),
-  TestCaseController.createTestCase
+  validateRequest(createTestCaseValidationSchema),
+  TestCaseController.createTestCase,
 );
-
 
 router.get(
   "/:id",
   auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-  TestCaseController.getTestCases
+  TestCaseController.getTestCases,
 );
-
-
-
-
 
 router.patch(
-  "/test-cases/:id",
+  "/:id",
   auth(Role.ADMIN, Role.COMPANY),
-  TestCaseController.updateTestCase
+  TestCaseController.updateTestCase,
 );
 
-
-// router.delete(
-//   "/test-cases/:id",
-//   auth(Role.ADMIN, Role.COMPANY),
-//   TestCaseController.deleteTestCase
-// );
+router.delete(
+  "/:id",
+  auth(Role.ADMIN, Role.COMPANY),
+  TestCaseController.deleteTestCase,
+);
 
 export const TestCaseRoutes = router;

@@ -16,3 +16,21 @@ export const createTestCaseValidationSchema = z.object({
     .optional()
     .default(true),
 });
+
+
+
+export const updateTestCaseValidationSchema = z
+  .object({
+    input: z.string().min(1).optional(),
+    expectedOutput: z.string().min(1).optional(),
+    isHidden: z.boolean().optional(),
+  })
+  .refine(
+    (data) =>
+      data.input !== undefined ||
+      data.expectedOutput !== undefined ||
+      data.isHidden !== undefined,
+    {
+      message: "At least one field is required to update",
+    },
+  );

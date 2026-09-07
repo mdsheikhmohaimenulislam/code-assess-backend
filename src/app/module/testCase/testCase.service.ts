@@ -1,13 +1,12 @@
-
 import type { Prisma } from "../../../generated/prisma/client.js";
 import { ProblemType, Role } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
-import type { CreateTestCasePayload } from "./testCase.interface.js";
-import httpStatus from 'http-status';
-
-
-
+import type {
+  CreateTestCasePayload,
+  UpdateTestCasePayload,
+} from "./testCase.interface.js";
+import httpStatus from "http-status";
 
 // Create Test Case
 const createTestCase = async (
@@ -29,17 +28,11 @@ const createTestCase = async (
   });
 
   if (!problem) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      "Problem not found",
-    );
+    throw new AppError(httpStatus.NOT_FOUND, "Problem not found");
   }
 
   // Company can add test case only to own problem
-  if (
-    userRole === Role.COMPANY &&
-    problem.createdById !== userId
-  ) {
+  if (userRole === Role.COMPANY && problem.createdById !== userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       "You are not allowed to add a test case to this problem",
@@ -101,20 +94,14 @@ const getTestCase = async (
   });
 
   if (!testCase) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      "Test case not found",
-    );
+    throw new AppError(httpStatus.NOT_FOUND, "Test case not found");
   }
 
   // ==========================================
   // 2. Company can only access own problem
   // ==========================================
 
-  if (
-    userRole === Role.COMPANY &&
-    testCase.problem.createdById !== userId
-  ) {
+  if (userRole === Role.COMPANY && testCase.problem.createdById !== userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       "You are not allowed to view this test case",
@@ -125,10 +112,7 @@ const getTestCase = async (
   // 3. Candidate cannot see hidden test case
   // ==========================================
 
-  if (
-    userRole === Role.CANDIDATE &&
-    testCase.isHidden
-  ) {
+  if (userRole === Role.CANDIDATE && testCase.isHidden) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       "You are not allowed to view this test case",
@@ -153,12 +137,12 @@ const getTestCase = async (
   return testCase;
 };
 
-
-// Get single Test Case
-const getTestCaseById = async (
+// Update Test Case
+const updateTestCase = async (
   userId: string,
-  userRole: string,
-  id: string
+  userRole: Role,
+  id: string,
+  payload: UpdateTestCasePayload,
 ) => {
   const testCase = await prisma.testCase.findUnique({
     where: {
@@ -168,118 +152,87 @@ const getTestCaseById = async (
       problem: {
         select: {
           id: true,
-          title: true,
           createdById: true,
+          type: true,
         },
       },
     },
   });
 
   if (!testCase) {
-    throw new Error("Test case not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Test case not found");
   }
 
-  // Candidate cannot see hidden test case
-  if (
-    userRole === "CANDIDATE" &&
-    testCase.isHidden
-  ) {
-    throw new Error("Test case not found");
+  // COMPANY can update only their own problem's test case
+  if (userRole === Role.COMPANY && testCase.problem.createdById !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to update this test case",
+    );
   }
 
-  return testCase;
+  const updatedTestCase = await prisma.testCase.update({
+    where: {
+      id,
+    },
+    data: {
+      ...(payload.input !== undefined && {
+        input: payload.input,
+      }),
+
+      ...(payload.expectedOutput !== undefined && {
+        expectedOutput: payload.expectedOutput,
+      }),
+
+      ...(payload.isHidden !== undefined && {
+        isHidden: payload.isHidden,
+      }),
+    },
+  });
+
+  return updatedTestCase;
 };
 
-// // Update Test Case
-// const updateTestCase = async (
-//   userId: string,
-//   userRole: string,
-//   id: string,
-//   payload: UpdateTestCasePayload
-// ) => {
-//   const testCase = await prisma.testCase.findUnique({
-//     where: {
-//       id,
-//     },
-//     include: {
-//       problem: {
-//         select: {
-//           createdById: true,
-//         },
-//       },
-//     },
-//   });
+// Delete Test Case
+const deleteTestCase = async (userId: string, userRole: Role, id: string) => {
+  const testCase = await prisma.testCase.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      problem: {
+        select: {
+          id: true,
+          createdById: true,
+          type: true,
+        },
+      },
+    },
+  });
 
-//   if (!testCase) {
-//     throw new Error("Test case not found");
-//   }
+  if (!testCase) {
+    throw new AppError(httpStatus.NOT_FOUND, "Test case not found");
+  }
 
-//   // Company can update only own problem's test case
-//   if (
-//     userRole === "COMPANY" &&
-//     testCase.problem.createdById !== userId
-//   ) {
-//     throw new Error(
-//       "You are not allowed to update this test case"
-//     );
-//   }
+  // COMPANY can delete only their own problem's test case
+  if (userRole === Role.COMPANY && testCase.problem.createdById !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to delete this test case",
+    );
+  }
 
-//   const updatedTestCase = await prisma.testCase.update({
-//     where: {
-//       id,
-//     },
-//     data: payload,
-//   });
-
-//   return updatedTestCase;
-// };
-
-// // Delete Test Case
-// const deleteTestCase = async (
-//   userId: string,
-//   userRole: string,
-//   id: string
-// ) => {
-//   const testCase = await prisma.testCase.findUnique({
-//     where: {
-//       id,
-//     },
-//     include: {
-//       problem: {
-//         select: {
-//           createdById: true,
-//         },
-//       },
-//     },
-//   });
-
-//   if (!testCase) {
-//     throw new Error("Test case not found");
-//   }
-
-//   // Company can delete only own problem's test case
-//   if (
-//     userRole === "COMPANY" &&
-//     testCase.problem.createdById !== userId
-//   ) {
-//     throw new Error(
-//       "You are not allowed to delete this test case"
-//     );
-//   }
-
-//   const deletedTestCase = await prisma.testCase.delete({
-//     where: {
-//       id,
-//     },
-//   });
-
-//   return deletedTestCase;
-// };
+  await prisma.testCase.delete({
+    where: {
+      id,
+    },
+  });
+};
 
 export const TestCaseService = {
   createTestCase,
-getTestCase,
-  getTestCaseById,
-//   updateTestCase,
-//   deleteTestCase,
+  getTestCase,
+
+  updateTestCase,
+  deleteTestCase,
 };
