@@ -367,20 +367,47 @@ const getInvitations = async (
 const getInvitationById = async (
   userId: string,
   userRole: Role,
-  invitationId: string
+  invitationId: string,
 ) => {
   const invitation =
     await prisma.invitation.findUnique({
       where: {
         id: invitationId,
       },
+
       include: {
         assessment: {
-          include: {
-            company: true,
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            duration: true,
+            startTime: true,
+            endTime: true,
+            status: true,
+
+            company: {
+              select: {
+                id: true,
+                userId: true,
+                companyName: true,
+              },
+            },
           },
         },
-        candidate: true,
+
+        candidate: {
+          select: {
+            id: true,
+            userId: true,
+            phone: true,
+            bio: true,
+            githubUrl: true,
+            linkedinUrl: true,
+            resumeUrl: true,
+          },
+        },
+
         user: {
           select: {
             id: true,
@@ -394,32 +421,36 @@ const getInvitationById = async (
     });
 
   if (!invitation) {
-    throw new ApiError(404, "Invitation not found");
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Invitation not found",
+    );
   }
 
   /**
-   * Candidate can only see own invitation
+   * Candidate can only view own invitation
    */
   if (
     userRole === Role.CANDIDATE &&
     invitation.userId !== userId
   ) {
-    throw new ApiError(
-      403,
-      "You are not allowed to view this invitation"
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to view this invitation",
     );
   }
 
   /**
-   * COMPANY can only see own assessment invitations
+   * Company can only view invitations
+   * from its own assessments
    */
   if (
     userRole === Role.COMPANY &&
     invitation.assessment.company.userId !== userId
   ) {
-    throw new ApiError(
-      403,
-      "You are not allowed to view this invitation"
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not allowed to view this invitation",
     );
   }
 

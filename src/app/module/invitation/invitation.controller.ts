@@ -50,24 +50,33 @@ const getInvitations = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getInvitationById = catchAsync(
-  async (req: Request, res: Response) => {
-    const userId = req.user!.userId;
-    const userRole = req.user!.role;
+const getInvitationById = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const userRole = req.user?.role;
 
-    const result = await InvitationService.getInvitationById(
-      userId,
-      userRole,
-      req.params.id
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Invitation retrieved successfully",
-      data: result,
-    });
+  if (!userId || !userRole) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
   }
-);
+
+  const invitationId = req.params.id;
+
+  if (!invitationId) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invitation ID is required");
+  }
+
+  const result = await InvitationService.getInvitationById(
+    userId,
+    userRole,
+    invitationId as string,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Invitation retrieved successfully",
+    data: result,
+  });
+});
 
 // const acceptInvitation = catchAsync(
 //   async (req: Request, res: Response) => {
@@ -125,7 +134,7 @@ const getInvitationById = catchAsync(
 export const InvitationController = {
   createInvitation,
   getInvitations,
-    getInvitationById,
+  getInvitationById,
   //   acceptInvitation,
   //   rejectInvitation,
   //   deleteInvitation,
