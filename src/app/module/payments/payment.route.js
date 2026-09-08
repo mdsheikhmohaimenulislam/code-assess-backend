@@ -15,5 +15,11 @@ router.get(
 	auth(Role.CANDIDATE),
 	PaymentController.executePayment,
 );
+
+router.get(
+  "/callback",
+  	auth(Role.CANDIDATE),
+  PaymentController.paymentCallback,
+);
 export const PaymentRoutes = router;
 //# sourceMappingURL=payment.route.js.map

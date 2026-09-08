@@ -6,37 +6,40 @@ import { AnswerService } from "./answer.service.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 
 const createAnswer = catchAsync(async (req: Request, res: Response) => {
-	const userId = req.user?.userId;
+  const userId = req.user?.userId;
 
-	const { id } = req.params;
+  const { id } = req.params;
 
-	const { problemId, answer, language } = req.body;
+  const { problemId, answer, language } = req.body;
 
-	// 1. Check authentication
-	if (!userId) {
-		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
-	}
-
-	// 2. Check Attempt ID
-	if (!id) {
-		throw new AppError(httpStatus.BAD_REQUEST, "Attempt ID is required");
-	}
-
-	// 3. Create / Update Answer
-	const result = await AnswerService.createAnswer(
-		userId,
-		id as string,
-		problemId,
-		answer,
-		language,
+  if (!userId) {
+	throw new AppError(
+	  httpStatus.UNAUTHORIZED,
+	  "Unauthorized",
 	);
+  }
 
-	sendResponse(res, {
-		statusCode: httpStatus.OK,
-		success: true,
-		message: "Answer saved successfully",
-		data: result,
-	});
+  if (!id) {
+	throw new AppError(
+	  httpStatus.BAD_REQUEST,
+	  "Attempt ID is required",
+	);
+  }
+
+  const result = await AnswerService.createAnswer(
+	userId,
+	id as string,
+	problemId,
+	answer,
+	language,
+  );
+
+  sendResponse(res, {
+	statusCode: httpStatus.OK,
+	success: true,
+	message: "Answer saved successfully",
+	data: result,
+  });
 });
 
 // const getAnswers = async (req: Request, res: Response) => {

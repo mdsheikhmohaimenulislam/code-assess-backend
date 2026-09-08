@@ -293,7 +293,125 @@ const executePayment = async (paymentID: string) => {
 	);
 };
 
+
+const executePaymentByBkashId = async (
+  bkashPaymentId: string,
+) => {
+  if (!bkashPaymentId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "bKash Payment ID is required",
+    );
+  }
+
+  // Find our payment using bKash payment ID
+  const payment = await prisma.payment.findUnique({
+    where: {
+      bkashPaymentId,
+    },
+  });
+
+  if (!payment) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Payment not found",
+    );
+  }
+
+  // Already paid
+  if (payment.status === PaymentStatus.PAID) {
+    return payment;
+  }
+
+  // Get bKash token
+  const idToken = await getBkashIdToken();
+
+  // Execute bKash payment
+  const response = await fetch(
+    `${config.bkash_base_url}/tokenized/checkout/execute`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: idToken,
+        "X-APP-Key": config.bkash_app_key,
+      },
+      body: JSON.stringify({
+        paymentID: payment.bkashPaymentId,
+      }),
+    },
+  );
+
+  const result: {
+    statusCode?: string;
+    statusMessage?: string;
+    trxID?: string;
+    [key: string]: unknown;
+  } = await response.json();
+
+  // bKash API error
+  if (!response.ok) {
+    throw new AppError(
+      httpStatus.BAD_GATEWAY,
+      result.statusMessage ||
+        "bKash payment execution failed",
+    );
+  }
+
+  // ==============================
+  // SUCCESS
+  // ==============================
+
+  if (result.statusCode === "0000") {
+    if (!result.trxID) {
+      throw new AppError(
+        httpStatus.BAD_GATEWAY,
+        "bKash transaction ID not received",
+      );
+    }
+
+    const updatedPayment =
+      await prisma.payment.update({
+        where: {
+          id: payment.id,
+        },
+        data: {
+          status: PaymentStatus.PAID,
+          bkashTrxId: result.trxID,
+          paidAt: new Date(),
+          gatewayResponse:
+            result as Prisma.InputJsonValue,
+        },
+      });
+
+    return updatedPayment;
+  }
+
+  // ==============================
+  // FAILED
+  // ==============================
+
+  await prisma.payment.update({
+    where: {
+      id: payment.id,
+    },
+    data: {
+      status: PaymentStatus.FAILED,
+      gatewayResponse:
+        result as Prisma.InputJsonValue,
+    },
+  });
+
+  throw new AppError(
+    httpStatus.BAD_GATEWAY,
+    result.statusMessage ||
+      "bKash payment failed",
+  );
+};
+
 export const PaymentService = {
 	createPayment,
 	executePayment,
+	executePaymentByBkashId
 };

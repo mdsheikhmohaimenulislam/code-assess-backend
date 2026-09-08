@@ -1,5 +1,7 @@
 import {
+	AssessmentAccessType,
 	AttemptStatus,
+	PaymentStatus,
 	ProblemType,
 	ProgrammingLanguage,
 } from "../../../generated/prisma/enums.js";
@@ -8,198 +10,245 @@ import { AppError } from "../../utils/AppError.js";
 import httpStatus from "http-status";
 
 const createAnswer = async (
-	userId: string,
-	attemptId: string,
-	problemId: string,
-	answer: string,
-	language: ProgrammingLanguage,
+  userId: string,
+  attemptId: string,
+  problemId: string,
+  answer: string,
+  language: ProgrammingLanguage,
 ) => {
-	// --------------------------------
-	// 1. Find candidate profile
-	// --------------------------------
+  // --------------------------------
+  // 1. Find candidate profile
+  // --------------------------------
 
-	const candidate = await prisma.candidateProfile.findUnique({
-		where: {
-			userId,
-		},
+  const candidate = await prisma.candidateProfile.findUnique({
+	where: {
+	  userId,
+	},
+	select: {
+	  id: true,
+	},
+  });
 
+  if (!candidate) {
+	throw new AppError(
+	  httpStatus.NOT_FOUND,
+	  "Candidate profile not found",
+	);
+  }
+
+  // --------------------------------
+  // 2. Find attempt + assessment
+  // --------------------------------
+
+  const attempt = await prisma.attempt.findUnique({
+	where: {
+	  id: attemptId,
+	},
+	select: {
+	  id: true,
+	  assessmentId: true,
+	  candidateId: true,
+	  status: true,
+	  expiresAt: true,
+
+	  assessment: {
 		select: {
-			id: true,
+		  id: true,
+		  title: true,
+		  accessType: true,
+		  price: true,
 		},
+	  },
+	},
+  });
+
+  if (!attempt) {
+	throw new AppError(
+	  httpStatus.NOT_FOUND,
+	  "Attempt not found",
+	);
+  }
+
+  // --------------------------------
+  // 3. Check attempt ownership
+  // --------------------------------
+
+  if (attempt.candidateId !== candidate.id) {
+	throw new AppError(
+	  httpStatus.FORBIDDEN,
+	  "You are not allowed to answer this attempt",
+	);
+  }
+
+  // --------------------------------
+  // 4. Check attempt status
+  // --------------------------------
+
+  if (attempt.status !== AttemptStatus.IN_PROGRESS) {
+	throw new AppError(
+	  httpStatus.BAD_REQUEST,
+	  "Attempt is not active",
+	);
+  }
+
+  // --------------------------------
+  // 5. Check attempt expiry
+  // --------------------------------
+
+  if (attempt.expiresAt && new Date() >= attempt.expiresAt) {
+	await prisma.attempt.update({
+	  where: {
+		id: attemptId,
+	  },
+	  data: {
+		status: AttemptStatus.EXPIRED,
+	  },
 	});
 
-	if (!candidate) {
-		throw new AppError(httpStatus.NOT_FOUND, "Candidate profile not found");
-	}
+	throw new AppError(
+	  httpStatus.BAD_REQUEST,
+	  "Attempt time has expired",
+	);
+  }
 
-	// --------------------------------
-	// 2. Find attempt
-	// --------------------------------
+  // --------------------------------
+  // 6. Check assessment payment
+  // --------------------------------
 
-	const attempt = await prisma.attempt.findUnique({
-		where: {
-			id: attemptId,
-		},
-
-		select: {
-			id: true,
-			assessmentId: true,
-			candidateId: true,
-			status: true,
-			expiresAt: true,
-		},
+  if (attempt.assessment.accessType === AssessmentAccessType.PAID) {
+	const payment = await prisma.payment.findFirst({
+	  where: {
+		userId,
+		assessmentId: attempt.assessmentId,
+		status: PaymentStatus.PAID,
+	  },
+	  select: {
+		id: true,
+		status: true,
+		paymentMethod: true,
+	  },
 	});
 
-	if (!attempt) {
-		throw new AppError(httpStatus.NOT_FOUND, "Attempt not found");
+	if (!payment) {
+	  throw new AppError(
+		httpStatus.PAYMENT_REQUIRED,
+		"This assessment is paid. Please complete the payment before answering.",
+	  );
 	}
+  }
 
-	// --------------------------------
-	// 3. Check attempt ownership
-	// --------------------------------
+  // --------------------------------
+  // 7. Find problem
+  // --------------------------------
 
-	if (attempt.candidateId !== candidate.id) {
-		throw new AppError(
-			httpStatus.FORBIDDEN,
-			"You are not allowed to answer this attempt",
-		);
-	}
+  const problem = await prisma.problem.findUnique({
+	where: {
+	  id: problemId,
+	},
+	select: {
+	  id: true,
+	  type: true,
+	},
+  });
 
-	// --------------------------------
-	// 4. Check attempt status
-	// --------------------------------
+  if (!problem) {
+	throw new AppError(
+	  httpStatus.NOT_FOUND,
+	  "Problem not found",
+	);
+  }
 
-	if (attempt.status !== AttemptStatus.IN_PROGRESS) {
-		throw new AppError(httpStatus.BAD_REQUEST, "Attempt is not active");
-	}
+  // --------------------------------
+  // 8. Only coding problems
+  // --------------------------------
 
-	// --------------------------------
-	// 5. Check attempt expiry
-	// --------------------------------
+  if (problem.type !== ProblemType.CODING) {
+	throw new AppError(
+	  httpStatus.BAD_REQUEST,
+	  "This endpoint is only for coding problems",
+	);
+  }
 
-	if (attempt.expiresAt && new Date() >= attempt.expiresAt) {
-		await prisma.attempt.update({
-			where: {
-				id: attemptId,
-			},
+  // --------------------------------
+  // 9. Check problem belongs to assessment
+  // --------------------------------
 
-			data: {
-				status: AttemptStatus.EXPIRED,
-			},
-		});
-
-		throw new AppError(httpStatus.BAD_REQUEST, "Attempt time has expired");
-	}
-
-	// --------------------------------
-	// 6. Find problem
-	// --------------------------------
-
-	const problem = await prisma.problem.findUnique({
-		where: {
-			id: problemId,
+  const assessmentProblem =
+	await prisma.assessmentProblem.findUnique({
+	  where: {
+		assessmentId_problemId: {
+		  assessmentId: attempt.assessmentId,
+		  problemId,
 		},
-
-		select: {
-			id: true,
-			type: true,
-		},
+	  },
+	  select: {
+		id: true,
+	  },
 	});
 
-	if (!problem) {
-		throw new AppError(httpStatus.NOT_FOUND, "Problem not found");
-	}
+  if (!assessmentProblem) {
+	throw new AppError(
+	  httpStatus.BAD_REQUEST,
+	  "Problem does not belong to this assessment",
+	);
+  }
 
-	// --------------------------------
-	// 7. Only coding problems
-	// --------------------------------
+  // --------------------------------
+  // 10. Validate answer
+  // --------------------------------
 
-	if (problem.type !== ProblemType.CODING) {
-		throw new AppError(
-			httpStatus.BAD_REQUEST,
-			"This endpoint is only for coding problems",
-		);
-	}
+  const cleanedAnswer = answer.trim();
 
-	// --------------------------------
-	// 8. Check problem belongs to assessment
-	// --------------------------------
+  if (!cleanedAnswer) {
+	throw new AppError(
+	  httpStatus.BAD_REQUEST,
+	  "Answer cannot be empty",
+	);
+  }
 
-	const assessmentProblem = await prisma.assessmentProblem.findUnique({
-		where: {
-			assessmentId_problemId: {
-				assessmentId: attempt.assessmentId,
-				problemId,
-			},
-		},
+  // --------------------------------
+  // 11. Save / Update Answer
+  // --------------------------------
 
-		select: {
-			id: true,
-		},
-	});
+  const result = await prisma.answer.upsert({
+	where: {
+	  attemptId_problemId: {
+		attemptId,
+		problemId,
+	  },
+	},
 
-	if (!assessmentProblem) {
-		throw new AppError(
-			httpStatus.BAD_REQUEST,
-			"Problem does not belong to this assessment",
-		);
-	}
+	create: {
+	  attemptId,
+	  problemId,
+	  answer: cleanedAnswer,
+	  language,
+	},
 
-	// --------------------------------
-	// 9. Validate answer
-	// --------------------------------
+	update: {
+	  answer: cleanedAnswer,
+	  language,
 
-	const cleanedAnswer = answer.trim();
+	  // Candidate code change করলে
+	  // previous evaluation reset হবে
+	  marks: null,
+	  isCorrect: null,
+	},
 
-	if (!cleanedAnswer) {
-		throw new AppError(httpStatus.BAD_REQUEST, "Answer cannot be empty");
-	}
+	select: {
+	  id: true,
+	  attemptId: true,
+	  problemId: true,
+	  answer: true,
+	  language: true,
+	  marks: true,
+	  isCorrect: true,
+	  createdAt: true,
+	  updatedAt: true,
+	},
+  });
 
-	// --------------------------------
-	// 10. Save / Update Answer
-	// --------------------------------
-
-	const result = await prisma.answer.upsert({
-		where: {
-			attemptId_problemId: {
-				attemptId,
-				problemId,
-			},
-		},
-
-		// New Answer
-		create: {
-			attemptId,
-			problemId,
-			answer: cleanedAnswer,
-			language,
-		},
-
-		// Existing Answer
-		update: {
-			answer: cleanedAnswer,
-			language,
-
-			// Candidate code change করলে
-			// previous evaluation reset হবে
-			marks: null,
-			isCorrect: null,
-		},
-
-		select: {
-			id: true,
-			attemptId: true,
-			problemId: true,
-			answer: true,
-			language: true,
-			marks: true,
-			isCorrect: true,
-			createdAt: true,
-			updatedAt: true,
-		},
-	});
-
-	return result;
+  return result;
 };
 
 // const getAnswers = async (

@@ -148,9 +148,9 @@ The application implements three primary roles with role-based authorization.
 
 | Role | Email | Password |
 |------|-------|----------|
-| 🛡️ **Admin** | `loi@example.com` | `Loi123456@` |
-| 🏢 **Company** | `company@example.com` | `Loi123456@` |
-| 👨‍💻 **Candidate** | `user1@example.com` | `Loi123456@` |
+| 🛡️ **Admin** | `loi@gmail.com` | `Loi123456@` |
+| 🏢 **Company** | `company@gmail.com` | `Loi123456@` |
+| 👨‍💻 **Candidate** | `user1@gmail.com` | `Loi123456@` |
 
 ## 🔐 Authentication & Authorization
 
