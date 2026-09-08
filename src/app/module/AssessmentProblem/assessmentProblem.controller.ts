@@ -63,7 +63,7 @@ const getAssessmentProblemById = catchAsync(
   async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    console.log(req.params);
+    // console.log(req.params);
 
     if (!id) {
       throw new AppError(

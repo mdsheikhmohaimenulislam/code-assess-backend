@@ -12,23 +12,23 @@ const PORT = Number(config.port);
 const main = async () => {
   try {
     await prisma.$connect();
-    console.log("Connected to the database successfully.");
+    // console.log("Connected to the database successfully.");
 
     await redisClient.connect();
-    console.log("Redis Connected Successfully.");
+    // console.log("Redis Connected Successfully.");
 
     await transporter.verify();
-    console.log("Nodemailer connected successfully.");
+    // console.log("Nodemailer connected successfully.");
 
     // await seedSuperAdmin();
     // await seedTesterAdmin();
     // await seedTesterDoctor();
 
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+      // console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("Error starting the server:", error);
+    // console.error("Error starting the server:", error);
     await prisma.$disconnect();
     process.exit(1);
   }

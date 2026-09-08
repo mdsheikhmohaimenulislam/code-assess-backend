@@ -1,0 +1,33 @@
+declare const _default: {
+    node_env: string | undefined;
+    port: number;
+    database_url: string | undefined;
+    bak_url: string | undefined;
+    frontend_url: string | undefined;
+    bcrypt_salt_rounds: string | undefined;
+    jwt_access_secret: string;
+    jwt_refresh_secret: string;
+    jwt_access_expires_in: string;
+    jwt_refresh_expires_in: string;
+    google_client_id: string;
+    google_client_secret: string;
+    GOOGLE_CLIENT_CALLBACK_URL: string;
+    redis_user: string;
+    redis_password: string;
+    redis_host: string;
+    redis_port: string;
+    SMTP_PASSWORD: string;
+    SMTP_USER: string;
+    email_sender: string;
+    cloudinary_cloud_name: string;
+    cloudinary_api_key: string;
+    cloudinary_api_secret: string;
+    bkash_base_url: string;
+    bkash_username: string;
+    bkash_password: string;
+    bkash_app_key: string;
+    bkash_app_secret: string;
+    bkash_callback_url: string;
+};
+export default _default;
+//# sourceMappingURL=index.d.ts.map

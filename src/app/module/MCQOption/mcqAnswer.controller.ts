@@ -10,7 +10,7 @@ import { sendResponse } from "../../utils/sendResponse.js";
 const createMCQAnswer = catchAsync(
   async (req: Request, res: Response) => {
     const userId = req.user?.userId;
-    console.log(userId);
+    // console.log(userId);
 
     if (!userId) {
       throw new AppError(

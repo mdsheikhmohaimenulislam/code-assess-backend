@@ -11,7 +11,7 @@ const evaluateSubmission = catchAsync(
     const userId = req.user?.userId;
     const userRole = req.user?.role;
     const answerId = req.params.id;
-    console.log(answerId);
+    // console.log(answerId);
 
     if (!userId || !userRole) {
       throw new AppError(

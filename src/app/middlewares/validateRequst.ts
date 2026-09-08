@@ -12,8 +12,8 @@ export const validateRequest = (zodSchema: z.ZodObject) => {
     const result = zodSchema.safeParse(payload);
 
     if (!result.success) {
-      console.log(result.error);
-      console.log(result.error.issues);
+      // console.log(result.error);
+      // console.log(result.error.issues);
 
       const message = result.error.issues[0]?.message ?? "Validation failed";
 

@@ -234,7 +234,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
   const { password } = payload;
   const email = payload.email.trim().toLowerCase();
 
-  console.log(email, password);
+  // console.log(email, password);
 
   const user = await prisma.user.findUnique({
     where: { email },
@@ -264,7 +264,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
     user.password as string,
   );
 
-  console.log("is passwormatched");
+  // console.log("is passwormatched");
 
   if (!isPasswordMatched) {
     throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials");
@@ -277,7 +277,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
     role: user.role,
   };
 
-  console.log("jwt payload");
+  // console.log("jwt payload");
 
   const accessToken = jwtUtils.createToken(
     jwtPayload,
@@ -285,7 +285,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
     config.jwt_access_expires_in as SignOptions,
   );
 
-  console.log("access token");
+  // console.log("access token");
 
   const refreshToken = jwtUtils.createToken(
     jwtPayload,
@@ -293,7 +293,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
     config.jwt_refresh_expires_in as SignOptions,
   );
 
-  console.log("refresh Token");
+  // console.log("refresh Token");
 
   return {
     accessToken,

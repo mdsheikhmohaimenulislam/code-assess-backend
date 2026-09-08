@@ -8,8 +8,8 @@ import { sendResponse } from "../../utils/sendResponse.js";
 const createTestCase = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const userRole = req.user?.role;
-  console.log("Logged in userId:", userId);
-  console.log("Logged in role:", userRole);
+//   console.log("Logged in userId:", userId);
+//   console.log("Logged in role:", userRole);
 
   if (!userId || !userRole) {
     throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
@@ -37,8 +37,8 @@ const createTestCase = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getTestCases = catchAsync(async (req: Request, res: Response) => {
-  console.log("🔥 ROUTE HIT");
-  console.log("PARAMS:", req.params);
+//   console.log("🔥 ROUTE HIT");
+//   console.log("PARAMS:", req.params);
 
   const userId = req.user?.userId;
   const userRole = req.user?.role;
