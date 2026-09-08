@@ -223,7 +223,7 @@ All APIs follow versioned RESTful routing:
 
 ## 🧩 Problems
 
-```ts
+```
 /api/v1/problem
 ```
 ## Provides:
@@ -240,7 +240,7 @@ All APIs follow versioned RESTful routing:
 
 ## 📝 Assessments
 
-```ts
+```
 /api/v1/assessment
 ```
 ## Provides:
@@ -261,7 +261,7 @@ All APIs follow versioned RESTful routing:
 
 ## 🔗 Assessment Problems
 
-```ts
+```
 /api/v1/assessment-problem
 ```
 ## Provides:
@@ -380,6 +380,10 @@ GET /api/v1/problem?status=active
 ### Sorting Example
 ```
 GET /api/v1/problem?sortBy=createdAt
+```
+### API Docs
+```
+https://documenter.getpostman.com/view/43872417/2sBYAxQ9fH
 ```
 ## 📦 Standard API Response
 ### Success Response
