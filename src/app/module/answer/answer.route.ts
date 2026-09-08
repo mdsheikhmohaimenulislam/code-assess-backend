@@ -3,14 +3,9 @@ import { auth } from "../../middlewares/checkAuth.js";
 import { Role } from "../../../generated/prisma/enums.js";
 import { AnswerController } from "./answer.controller.js";
 
-
 const router = Router();
 
-router.post(
-  "/:id",
-  auth(Role.CANDIDATE),
-  AnswerController.createAnswer
-);
+router.post("/:id", auth(Role.CANDIDATE), AnswerController.createAnswer);
 
 // router.get(
 //   "//:attemptId/answers",

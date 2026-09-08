@@ -10,10 +10,10 @@ import { validateRequest } from "../../middlewares/validateRequst.js";
 const router = Router();
 
 router.post(
-  "/",
-  auth(Role.CANDIDATE),
-  validateRequest(createMCQAnswerValidationSchema),
-  MCQAnswerController.createMCQAnswer,
+	"/",
+	auth(Role.CANDIDATE),
+	validateRequest(createMCQAnswerValidationSchema),
+	MCQAnswerController.createMCQAnswer,
 );
 
 export const MCQAnswerRoutes = router;

@@ -1,25 +1,25 @@
 import { catchAsync } from "../../utils/catchAsync.js";
 import { AppError } from "../../utils/AppError.js";
-import httpStatus from 'http-status';
+import httpStatus from "http-status";
 import { ResultService } from "./result.service.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 const createResult = catchAsync(async (req, res) => {
-    const userId = req.user?.userId;
-    const userRole = req.user?.role;
-    const { id: attemptId } = req.params;
-    if (!userId || !userRole) {
-        throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
-    }
-    if (!attemptId) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Attempt ID is required");
-    }
-    const result = await ResultService.createResult(attemptId, userId, userRole);
-    sendResponse(res, {
-        statusCode: httpStatus.CREATED,
-        success: true,
-        message: "Result created successfully",
-        data: result,
-    });
+	const userId = req.user?.userId;
+	const userRole = req.user?.role;
+	const { id: attemptId } = req.params;
+	if (!userId || !userRole) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+	}
+	if (!attemptId) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Attempt ID is required");
+	}
+	const result = await ResultService.createResult(attemptId, userId, userRole);
+	sendResponse(res, {
+		statusCode: httpStatus.CREATED,
+		success: true,
+		message: "Result created successfully",
+		data: result,
+	});
 });
 // const getResultByAttempt = async (
 //   req: Request,
@@ -67,9 +67,9 @@ const createResult = catchAsync(async (req, res) => {
 //   });
 // };
 export const ResultController = {
-    createResult,
-    //   getResultByAttempt,
-    //   getResultById,
-    //   getResults,
+	createResult,
+	//   getResultByAttempt,
+	//   getResultById,
+	//   getResults,
 };
 //# sourceMappingURL=result.controller.js.map

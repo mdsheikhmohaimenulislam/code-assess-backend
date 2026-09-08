@@ -1,47 +1,37 @@
 import type { Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { AppError } from "../../utils/AppError.js";
-import httpStatus from 'http-status';
+import httpStatus from "http-status";
 import { ResultService } from "./result.service.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 
+const createResult = catchAsync(async (req: Request, res: Response) => {
+	const userId = req.user?.userId;
+	const userRole = req.user?.role;
 
-const createResult = catchAsync(
-  async (req: Request, res: Response) => {
-    const userId = req.user?.userId;
-    const userRole = req.user?.role;
+	const { id: attemptId } = req.params;
 
-    const { id: attemptId } = req.params;
+	if (!userId || !userRole) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+	}
 
-    if (!userId || !userRole) {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        "Unauthorized",
-      );
-    }
+	if (!attemptId) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Attempt ID is required");
+	}
 
-    if (!attemptId) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Attempt ID is required",
-      );
-    }
+	const result = await ResultService.createResult(
+		attemptId as string,
+		userId,
+		userRole,
+	);
 
-    const result = await ResultService.createResult(
-      attemptId as string,
-      userId,
-      userRole,
-    );
-
-    sendResponse(res, {
-      statusCode: httpStatus.CREATED,
-      success: true,
-      message: "Result created successfully",
-      data: result,
-    });
-  },
-);
-
+	sendResponse(res, {
+		statusCode: httpStatus.CREATED,
+		success: true,
+		message: "Result created successfully",
+		data: result,
+	});
+});
 
 // const getResultByAttempt = async (
 //   req: Request,
@@ -95,8 +85,8 @@ const createResult = catchAsync(
 // };
 
 export const ResultController = {
-  createResult,
-//   getResultByAttempt,
-//   getResultById,
-//   getResults,
+	createResult,
+	//   getResultByAttempt,
+	//   getResultById,
+	//   getResults,
 };

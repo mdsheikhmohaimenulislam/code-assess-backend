@@ -5,48 +5,43 @@ import { validateRequest } from "../../middlewares/validateRequst.js";
 import { createInvitationValidationSchema } from "./invitation.validation.js";
 import { InvitationController } from "./invitation.controller.js";
 
-
 const router = Router();
 
-
 router.post(
-  "/",
-  auth(Role.ADMIN, Role.COMPANY),
-  validateRequest(createInvitationValidationSchema),
-  InvitationController.createInvitation,
+	"/",
+	auth(Role.ADMIN, Role.COMPANY),
+	validateRequest(createInvitationValidationSchema),
+	InvitationController.createInvitation,
 );
 
 router.get(
-  "/",
-  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-  InvitationController.getInvitations
+	"/",
+	auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+	InvitationController.getInvitations,
 );
-
 
 router.get(
-  "/:id",
-  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-  InvitationController.getInvitationById
-);
-
-
-router.patch(
-  "/accept/:id",
-  auth(Role.CANDIDATE),
-  InvitationController.acceptInvitation,
+	"/:id",
+	auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+	InvitationController.getInvitationById,
 );
 
 router.patch(
-  "/reject/:id",
-  auth(Role.CANDIDATE),
-  InvitationController.rejectInvitation,
+	"/accept/:id",
+	auth(Role.CANDIDATE),
+	InvitationController.acceptInvitation,
 );
 
+router.patch(
+	"/reject/:id",
+	auth(Role.CANDIDATE),
+	InvitationController.rejectInvitation,
+);
 
 router.delete(
-  "/:id",
-  auth(Role.ADMIN, Role.COMPANY),
-  InvitationController.deleteInvitation,
+	"/:id",
+	auth(Role.ADMIN, Role.COMPANY),
+	InvitationController.deleteInvitation,
 );
 
 export const InvitationRoutes = router;

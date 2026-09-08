@@ -3,13 +3,12 @@ import { auth } from "../../middlewares/checkAuth.js";
 import { Role } from "../../../generated/prisma/enums.js";
 import { EvaluationController } from "./evaluation.controller.js";
 
-
 const router = Router();
 
 router.post(
-  "/answer/:id",
-  auth(Role.ADMIN, Role.COMPANY),
-  EvaluationController.evaluateSubmission,
+	"/answer/:id",
+	auth(Role.ADMIN, Role.COMPANY),
+	EvaluationController.evaluateSubmission,
 );
 
 // router.get(

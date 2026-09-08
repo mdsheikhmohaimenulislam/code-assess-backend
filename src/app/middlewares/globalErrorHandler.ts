@@ -1,8 +1,4 @@
-import type {
-  NextFunction,
-  Request,
-  Response,
-} from "express";
+import type { NextFunction, Request, Response } from "express";
 
 import httpStatus from "http-status";
 
@@ -13,216 +9,175 @@ import config from "../config/index.js";
 import { AppError } from "../utils/AppError.js";
 
 export const globalErrorHandler = (
-  err: unknown,
-  _req: Request,
-  res: Response,
-  _next: NextFunction,
+	err: unknown,
+	_req: Request,
+	res: Response,
+	_next: NextFunction,
 ) => {
-  // =========================
-  // Console Error
-  // =========================
+	// =========================
+	// Console Error
+	// =========================
 
-  if (config.node_env === "development") {
-    console.error("========== ERROR ==========");
-    console.error(err);
-    console.error("===========================");
-  }
+	if (config.node_env === "development") {
+		console.error("========== ERROR ==========");
+		console.error(err);
+		console.error("===========================");
+	}
 
-  let statusCode: number =
-    httpStatus.INTERNAL_SERVER_ERROR;
+	let statusCode: number = httpStatus.INTERNAL_SERVER_ERROR;
 
-  let errorMessage = "Internal Server Error";
+	let errorMessage = "Internal Server Error";
 
-  let errorName = "Internal Server Error";
+	let errorName = "Internal Server Error";
 
-  // =========================
-  // App Error
-  // =========================
+	// =========================
+	// App Error
+	// =========================
 
-  if (err instanceof AppError) {
-    statusCode = err.statusCode;
-    errorMessage = err.message;
-    errorName = err.name;
-  }
+	if (err instanceof AppError) {
+		statusCode = err.statusCode;
+		errorMessage = err.message;
+		errorName = err.name;
+	}
 
-  // =========================
-  // Prisma Validation Error
-  // =========================
+	// =========================
+	// Prisma Validation Error
+	// =========================
+	else if (err instanceof Prisma.PrismaClientValidationError) {
+		statusCode = httpStatus.BAD_REQUEST;
 
-  else if (
-    err instanceof Prisma.PrismaClientValidationError
-  ) {
-    statusCode = httpStatus.BAD_REQUEST;
+		errorMessage =
+			config.node_env === "development"
+				? err.message
+				: "Invalid data provided. Please check your input.";
 
-    errorMessage =
-      config.node_env === "development"
-        ? err.message
-        : "Invalid data provided. Please check your input.";
+		errorName = "PrismaValidationError";
+	}
 
-    errorName = "PrismaValidationError";
-  }
+	// =========================
+	// Prisma Known Request Error
+	// =========================
+	else if (err instanceof Prisma.PrismaClientKnownRequestError) {
+		errorName = "PrismaKnownRequestError";
 
-  // =========================
-  // Prisma Known Request Error
-  // =========================
+		console.error("========== PRISMA KNOWN ERROR ==========");
 
-  else if (
-    err instanceof Prisma.PrismaClientKnownRequestError
-  ) {
-    errorName = "PrismaKnownRequestError";
+		console.error("CODE:", err.code);
+		console.error("MESSAGE:", err.message);
+		console.error("META:", err.meta);
 
-    console.error(
-      "========== PRISMA KNOWN ERROR ==========",
-    );
+		console.error("========================================");
 
-    console.error("CODE:", err.code);
-    console.error("MESSAGE:", err.message);
-    console.error("META:", err.meta);
+		switch (err.code) {
+			case "P2002":
+				statusCode = httpStatus.CONFLICT;
 
-    console.error(
-      "========================================",
-    );
+				errorMessage = "A record with this value already exists.";
 
-    switch (err.code) {
-      case "P2002":
-        statusCode = httpStatus.CONFLICT;
+				break;
 
-        errorMessage =
-          "A record with this value already exists.";
+			case "P2003":
+				statusCode = httpStatus.BAD_REQUEST;
 
-        break;
+				errorMessage = "Foreign key constraint failed.";
 
-      case "P2003":
-        statusCode = httpStatus.BAD_REQUEST;
+				break;
 
-        errorMessage =
-          "Foreign key constraint failed.";
+			case "P2025":
+				statusCode = httpStatus.NOT_FOUND;
 
-        break;
+				errorMessage = "The requested record was not found.";
 
-      case "P2025":
-        statusCode = httpStatus.NOT_FOUND;
+				break;
 
-        errorMessage =
-          "The requested record was not found.";
+			default:
+				statusCode = httpStatus.INTERNAL_SERVER_ERROR;
 
-        break;
+				errorMessage =
+					config.node_env === "development"
+						? err.message
+						: "A database error occurred.";
+		}
+	}
 
-      default:
-        statusCode =
-          httpStatus.INTERNAL_SERVER_ERROR;
+	// =========================
+	// Prisma Initialization Error
+	// =========================
+	else if (err instanceof Prisma.PrismaClientInitializationError) {
+		errorName = "PrismaInitializationError";
 
-        errorMessage =
-          config.node_env === "development"
-            ? err.message
-            : "A database error occurred.";
-    }
-  }
+		console.error("========== PRISMA INITIALIZATION ERROR ==========");
 
-  // =========================
-  // Prisma Initialization Error
-  // =========================
+		console.error("CODE:", err.errorCode);
+		console.error("MESSAGE:", err.message);
 
-  else if (
-    err instanceof
-    Prisma.PrismaClientInitializationError
-  ) {
-    errorName = "PrismaInitializationError";
+		console.error("=================================================");
 
-    console.error(
-      "========== PRISMA INITIALIZATION ERROR ==========",
-    );
+		if (err.errorCode === "P1000") {
+			statusCode = httpStatus.UNAUTHORIZED;
 
-    console.error("CODE:", err.errorCode);
-    console.error("MESSAGE:", err.message);
+			errorMessage = "Database authentication failed.";
+		} else if (err.errorCode === "P1001") {
+			statusCode = httpStatus.INTERNAL_SERVER_ERROR;
 
-    console.error(
-      "=================================================",
-    );
+			errorMessage = "Cannot reach the database server.";
+		} else {
+			statusCode = httpStatus.INTERNAL_SERVER_ERROR;
 
-    if (err.errorCode === "P1000") {
-      statusCode = httpStatus.UNAUTHORIZED;
+			errorMessage =
+				config.node_env === "development"
+					? err.message
+					: "Database initialization failed.";
+		}
+	}
 
-      errorMessage =
-        "Database authentication failed.";
-    } else if (err.errorCode === "P1001") {
-      statusCode =
-        httpStatus.INTERNAL_SERVER_ERROR;
+	// =========================
+	// Prisma Unknown Request Error
+	// =========================
+	else if (err instanceof Prisma.PrismaClientUnknownRequestError) {
+		statusCode = httpStatus.INTERNAL_SERVER_ERROR;
 
-      errorMessage =
-        "Cannot reach the database server.";
-    } else {
-      statusCode =
-        httpStatus.INTERNAL_SERVER_ERROR;
+		errorName = "PrismaUnknownRequestError";
 
-      errorMessage =
-        config.node_env === "development"
-          ? err.message
-          : "Database initialization failed.";
-    }
-  }
+		console.error("========== PRISMA UNKNOWN ERROR ==========");
 
-  // =========================
-  // Prisma Unknown Request Error
-  // =========================
+		console.error("MESSAGE:", err.message);
+		console.error("ERROR:", err);
 
-  else if (
-    err instanceof
-    Prisma.PrismaClientUnknownRequestError
-  ) {
-    statusCode =
-      httpStatus.INTERNAL_SERVER_ERROR;
+		console.error("==========================================");
 
-    errorName = "PrismaUnknownRequestError";
+		errorMessage =
+			config.node_env === "development"
+				? err.message
+				: "An error occurred while executing the database query.";
+	}
 
-    console.error(
-      "========== PRISMA UNKNOWN ERROR ==========",
-    );
+	// =========================
+	// Normal Error
+	// =========================
+	else if (err instanceof Error) {
+		statusCode = httpStatus.INTERNAL_SERVER_ERROR;
 
-    console.error("MESSAGE:", err.message);
-    console.error("ERROR:", err);
+		errorName = err.name;
+		errorMessage = err.message;
 
-    console.error(
-      "==========================================",
-    );
+		console.error("ERROR NAME:", err.name);
+		console.error("ERROR MESSAGE:", err.message);
+		console.error("STACK:", err.stack);
+	}
 
-    errorMessage =
-      config.node_env === "development"
-        ? err.message
-        : "An error occurred while executing the database query.";
-  }
+	// =========================
+	// Response
+	// =========================
 
-  // =========================
-  // Normal Error
-  // =========================
+	res.status(statusCode).json({
+		success: false,
+		statusCode,
+		name: errorName,
+		message: errorMessage,
 
-  else if (err instanceof Error) {
-    statusCode =
-      httpStatus.INTERNAL_SERVER_ERROR;
-
-    errorName = err.name;
-    errorMessage = err.message;
-
-    console.error("ERROR NAME:", err.name);
-    console.error("ERROR MESSAGE:", err.message);
-    console.error("STACK:", err.stack);
-  }
-
-  // =========================
-  // Response
-  // =========================
-
-  res.status(statusCode).json({
-    success: false,
-    statusCode,
-    name: errorName,
-    message: errorMessage,
-
-    ...(config.node_env === "development" && {
-      stack:
-        err instanceof Error
-          ? err.stack
-          : undefined,
-    }),
-  });
+		...(config.node_env === "development" && {
+			stack: err instanceof Error ? err.stack : undefined,
+		}),
+	});
 };

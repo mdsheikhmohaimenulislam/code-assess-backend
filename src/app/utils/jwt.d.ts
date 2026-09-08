@@ -1,17 +1,26 @@
 import { type JwtPayload, type SignOptions } from "jsonwebtoken";
-declare const createToken: (payload: JwtPayload, secret: string, expiresIn: SignOptions) => string;
-declare const verifyToken: (token: string, secret: string) => {
-    success: boolean;
-    data: string | JwtPayload;
-    error?: never;
-} | {
-    data?: never;
-    success: boolean;
-    error: any;
-};
+declare const createToken: (
+	payload: JwtPayload,
+	secret: string,
+	expiresIn: SignOptions,
+) => string;
+declare const verifyToken: (
+	token: string,
+	secret: string,
+) =>
+	| {
+			success: boolean;
+			data: string | JwtPayload;
+			error?: never;
+	  }
+	| {
+			data?: never;
+			success: boolean;
+			error: any;
+	  };
 export declare const jwtUtils: {
-    createToken: typeof createToken;
-    verifyToken: typeof verifyToken;
+	createToken: typeof createToken;
+	verifyToken: typeof verifyToken;
 };
 export {};
 //# sourceMappingURL=jwt.d.ts.map

@@ -37,249 +37,224 @@ import { AppError } from "../../utils/AppError.js";
 // ============================================
 
 const createResult = async (
-  attemptId: string,
-  userId: string,
-  userRole: Role,
+	attemptId: string,
+	userId: string,
+	userRole: Role,
 ) => {
-  // ============================================
-  // 1. Validate attempt ID
-  // ============================================
+	// ============================================
+	// 1. Validate attempt ID
+	// ============================================
 
-  if (!attemptId) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "Attempt ID is required",
-    );
-  }
+	if (!attemptId) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Attempt ID is required");
+	}
 
-  // ============================================
-  // 2. Find attempt
-  // ============================================
+	// ============================================
+	// 2. Find attempt
+	// ============================================
 
-  const attempt = await prisma.attempt.findUnique({
-    where: {
-      id: attemptId,
-    },
+	const attempt = await prisma.attempt.findUnique({
+		where: {
+			id: attemptId,
+		},
 
-    include: {
-      // Candidate + User information
-      candidate: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-      },
+		include: {
+			// Candidate + User information
+			candidate: {
+				include: {
+					user: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+						},
+					},
+				},
+			},
 
-      // Assessment information
-      assessment: {
-        select: {
-          id: true,
-          title: true,
-          totalMarks: true,
-          passingMarks: true,
-          createdById: true,
-        },
-      },
+			// Assessment information
+			assessment: {
+				select: {
+					id: true,
+					title: true,
+					totalMarks: true,
+					passingMarks: true,
+					createdById: true,
+				},
+			},
 
-      // Coding answers
-      answers: {
-        select: {
-          id: true,
-          problemId: true,
-          marks: true,
-          isCorrect: true,
-        },
-      },
+			// Coding answers
+			answers: {
+				select: {
+					id: true,
+					problemId: true,
+					marks: true,
+					isCorrect: true,
+				},
+			},
 
-      // MCQ answers
-      mcqAnswers: {
-        select: {
-          id: true,
-          problemId: true,
-          marksAwarded: true,
-          isCorrect: true,
-        },
-      },
+			// MCQ answers
+			mcqAnswers: {
+				select: {
+					id: true,
+					problemId: true,
+					marksAwarded: true,
+					isCorrect: true,
+				},
+			},
 
-      // Submissions
-      submissions: {
-        select: {
-          id: true,
-          problemId: true,
-          score: true,
-          status: true,
-        },
-      },
-    },
-  });
+			// Submissions
+			submissions: {
+				select: {
+					id: true,
+					problemId: true,
+					score: true,
+					status: true,
+				},
+			},
+		},
+	});
 
-  // ============================================
-  // 3. Attempt not found
-  // ============================================
+	// ============================================
+	// 3. Attempt not found
+	// ============================================
 
-  if (!attempt) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      "Attempt not found",
-    );
-  }
+	if (!attempt) {
+		throw new AppError(httpStatus.NOT_FOUND, "Attempt not found");
+	}
 
-  // ============================================
-  // 4. Company ownership check
-  // ============================================
+	// ============================================
+	// 4. Company ownership check
+	// ============================================
 
-  if (
-    userRole === Role.COMPANY &&
-    attempt.assessment.createdById !== userId
-  ) {
-    throw new AppError(
-      httpStatus.FORBIDDEN,
-      "You are not allowed to create this result",
-    );
-  }
+	if (userRole === Role.COMPANY && attempt.assessment.createdById !== userId) {
+		throw new AppError(
+			httpStatus.FORBIDDEN,
+			"You are not allowed to create this result",
+		);
+	}
 
-  // ============================================
-  // 5. Attempt must be submitted
-  // ============================================
+	// ============================================
+	// 5. Attempt must be submitted
+	// ============================================
 
-  if (attempt.status !== AttemptStatus.SUBMITTED) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "Attempt must be submitted before creating result",
-    );
-  }
+	if (attempt.status !== AttemptStatus.SUBMITTED) {
+		throw new AppError(
+			httpStatus.BAD_REQUEST,
+			"Attempt must be submitted before creating result",
+		);
+	}
 
-  // ============================================
-  // 6. Check existing result
-  // ============================================
+	// ============================================
+	// 6. Check existing result
+	// ============================================
 
-  const existingResult = await prisma.result.findUnique({
-    where: {
-      attemptId,
-    },
-  });
+	const existingResult = await prisma.result.findUnique({
+		where: {
+			attemptId,
+		},
+	});
 
-  if (existingResult) {
-    return existingResult;
-  }
+	if (existingResult) {
+		return existingResult;
+	}
 
-  // ============================================
-  // 7. Calculate Coding Marks
-  // ============================================
+	// ============================================
+	// 7. Calculate Coding Marks
+	// ============================================
 
-  const codingMarks = attempt.answers.reduce(
-    (total, answer) => {
-      return total + (answer.marks ?? 0);
-    },
-    0,
-  );
+	const codingMarks = attempt.answers.reduce((total, answer) => {
+		return total + (answer.marks ?? 0);
+	}, 0);
 
-  // ============================================
-  // 8. Calculate MCQ Marks
-  // ============================================
+	// ============================================
+	// 8. Calculate MCQ Marks
+	// ============================================
 
-  const mcqMarks = attempt.mcqAnswers.reduce(
-    (total, answer) => {
-      return total + (answer.marksAwarded ?? 0);
-    },
-    0,
-  );
+	const mcqMarks = attempt.mcqAnswers.reduce((total, answer) => {
+		return total + (answer.marksAwarded ?? 0);
+	}, 0);
 
-  // ============================================
-  // 9. Calculate Obtained Marks
-  // ============================================
+	// ============================================
+	// 9. Calculate Obtained Marks
+	// ============================================
 
-  const obtainedMarks =
-    codingMarks + mcqMarks;
+	const obtainedMarks = codingMarks + mcqMarks;
 
-  // ============================================
-  // 10. Total Assessment Marks
-  // ============================================
+	// ============================================
+	// 10. Total Assessment Marks
+	// ============================================
 
-  const totalMarks =
-    attempt.assessment.totalMarks;
+	const totalMarks = attempt.assessment.totalMarks;
 
-  // ============================================
-  // 11. Calculate Percentage
-  // ============================================
+	// ============================================
+	// 11. Calculate Percentage
+	// ============================================
 
-  const percentage =
-    totalMarks > 0
-      ? Number(
-          (
-            (obtainedMarks / totalMarks) *
-            100
-          ).toFixed(2),
-        )
-      : 0;
+	const percentage =
+		totalMarks > 0
+			? Number(((obtainedMarks / totalMarks) * 100).toFixed(2))
+			: 0;
 
-  // ============================================
-  // 12. Check Pass / Fail
-  // ============================================
+	// ============================================
+	// 12. Check Pass / Fail
+	// ============================================
 
-  const passed =
-    obtainedMarks >=
-    attempt.assessment.passingMarks;
+	const passed = obtainedMarks >= attempt.assessment.passingMarks;
 
-  // ============================================
-  // 13. Create Result
-  // ============================================
+	// ============================================
+	// 13. Create Result
+	// ============================================
 
-  const result = await prisma.result.create({
-    data: {
-      attemptId: attempt.id,
-      totalMarks,
-      obtainedMarks,
-      percentage,
-      passed,
-    },
+	const result = await prisma.result.create({
+		data: {
+			attemptId: attempt.id,
+			totalMarks,
+			obtainedMarks,
+			percentage,
+			passed,
+		},
 
-    select: {
-      id: true,
-      attemptId: true,
-      totalMarks: true,
-      obtainedMarks: true,
-      percentage: true,
-      passed: true,
-      rank: true,
-      createdAt: true,
-    },
-  });
+		select: {
+			id: true,
+			attemptId: true,
+			totalMarks: true,
+			obtainedMarks: true,
+			percentage: true,
+			passed: true,
+			rank: true,
+			createdAt: true,
+		},
+	});
 
-  // ============================================
-  // 14. Send Result Email
-  // ============================================
+	// ============================================
+	// 14. Send Result Email
+	// ============================================
 
-//   try {
-//     await sendResultEmail(
-//       attempt.candidate.user.email,
-//       attempt.candidate.user.name,
-//       attempt.assessment.title,
-//       totalMarks,
-//       obtainedMarks,
-//       percentage,
-//       attempt.assessment.passingMarks,
-//       passed,
-//     );
-//   } catch (error) {
-//     console.error(
-//       "Result created successfully, but result email failed:",
-//       error,
-//     );
-//   }
+	//   try {
+	//     await sendResultEmail(
+	//       attempt.candidate.user.email,
+	//       attempt.candidate.user.name,
+	//       attempt.assessment.title,
+	//       totalMarks,
+	//       obtainedMarks,
+	//       percentage,
+	//       attempt.assessment.passingMarks,
+	//       passed,
+	//     );
+	//   } catch (error) {
+	//     console.error(
+	//       "Result created successfully, but result email failed:",
+	//       error,
+	//     );
+	//   }
 
-  // ============================================
-  // 15. Return Result
-  // ============================================
+	// ============================================
+	// 15. Return Result
+	// ============================================
 
-  return result;
+	return result;
 };
-
 
 // const getResultByAttempt = async (
 //   userId: string,
@@ -380,8 +355,8 @@ const createResult = async (
 // };
 
 export const ResultService = {
-  createResult,
-  //   getResultByAttempt,
-  //   getResultById,
-  //   getResults,
+	createResult,
+	//   getResultByAttempt,
+	//   getResultById,
+	//   getResults,
 };

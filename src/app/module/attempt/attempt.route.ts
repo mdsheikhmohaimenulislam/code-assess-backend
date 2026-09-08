@@ -8,28 +8,28 @@ import { AttemptController } from "./attempt.controller.js";
 const router = Router();
 
 router.post(
-  "/",
-  auth(Role.CANDIDATE),
-  validateRequest(createAttemptValidationSchema),
-  AttemptController.createAttempt,
+	"/",
+	auth(Role.CANDIDATE),
+	validateRequest(createAttemptValidationSchema),
+	AttemptController.createAttempt,
 );
 
 router.get(
-  "/",
-  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-  AttemptController.getAttempts,
+	"/",
+	auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+	AttemptController.getAttempts,
 );
 
 router.get(
-  "/:id",
-  auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
-  AttemptController.getAttemptById,
+	"/:id",
+	auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+	AttemptController.getAttemptById,
 );
 
 router.post(
-  "/submit/:id",
-  auth(Role.CANDIDATE),
-  AttemptController.submitAttempt,
+	"/submit/:id",
+	auth(Role.CANDIDATE),
+	AttemptController.submitAttempt,
 );
 
 export const AttemptRoutes = router;

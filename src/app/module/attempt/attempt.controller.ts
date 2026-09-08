@@ -6,113 +6,101 @@ import { catchAsync } from "../../utils/catchAsync.js";
 import type { Request, Response } from "express";
 
 const createAttempt = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
+	const userId = req.user?.userId;
 
-  if (!userId) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
-  }
+	if (!userId) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+	}
 
-  const { assessmentId } = req.body;
+	const { assessmentId } = req.body;
 
-  const result = await AttemptService.createAttempt(userId, assessmentId);
-  sendResponse(res, {
-    statusCode: httpStatus.CREATED,
-    success: true,
-    message: "Assessment attempt started successfully",
-    data: result,
-  });
+	const result = await AttemptService.createAttempt(userId, assessmentId);
+	sendResponse(res, {
+		statusCode: httpStatus.CREATED,
+		success: true,
+		message: "Assessment attempt started successfully",
+		data: result,
+	});
 });
 
 const getAttempts = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
-  const userRole = req.user?.role;
+	const userId = req.user?.userId;
+	const userRole = req.user?.role;
 
-  if (!userId || !userRole) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
-  }
+	if (!userId || !userRole) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+	}
 
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
+	const page = Number(req.query.page) || 1;
+	const limit = Number(req.query.limit) || 10;
 
-  const result = await AttemptService.getAttempts({
-    userId,
-    userRole,
-    page,
-    limit,
-  });
+	const result = await AttemptService.getAttempts({
+		userId,
+		userRole,
+		page,
+		limit,
+	});
 
-  res.status(httpStatus.OK).json({
-    success: true,
-    message: "Attempts retrieved successfully",
-    data: result.data,
-    meta: result.meta,
-  });
+	res.status(httpStatus.OK).json({
+		success: true,
+		message: "Attempts retrieved successfully",
+		data: result.data,
+		meta: result.meta,
+	});
 });
 
 const getAttemptById = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
-  const userRole = req.user?.role;
-  const { id } = req.params;
+	const userId = req.user?.userId;
+	const userRole = req.user?.role;
+	const { id } = req.params;
 
-  if (!userId || !userRole) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
-  }
+	if (!userId || !userRole) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+	}
 
-  if (!id) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Attempt ID is required");
-  }
+	if (!id) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Attempt ID is required");
+	}
 
-  const result = await AttemptService.getAttemptById(
-    userId,
-    userRole,
-    id as string,
-  );
+	const result = await AttemptService.getAttemptById(
+		userId,
+		userRole,
+		id as string,
+	);
 
-  res.status(httpStatus.OK).json({
-    success: true,
-    message: "Attempt retrieved successfully",
-    data: result,
-  });
+	res.status(httpStatus.OK).json({
+		success: true,
+		message: "Attempt retrieved successfully",
+		data: result,
+	});
 });
 
-const submitAttempt = catchAsync(
-  async (req: Request, res: Response) => {
-    const userId = req.user?.userId;
+const submitAttempt = catchAsync(async (req: Request, res: Response) => {
+	const userId = req.user?.userId;
 
-    if (!userId) {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        "Unauthorized",
-      );
-    }
+	if (!userId) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+	}
 
-    const { id } = req.params;
+	const { id } = req.params;
 
-    if (!id) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Attempt ID is required",
-      );
-    }
+	if (!id) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Attempt ID is required");
+	}
 
-    const result = await AttemptService.submitAttempt(
-      userId,
-      id as string,
-    );
+	const result = await AttemptService.submitAttempt(userId, id as string);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Assessment submitted successfully",
-      data: result,
-    });
-  },
-);
-
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Assessment submitted successfully",
+		data: result,
+	});
+});
 
 export const AttemptController = {
-  createAttempt,
-  getAttempts,
-  getAttemptById,
-    submitAttempt,
+	createAttempt,
+	getAttempts,
+	getAttemptById,
+	submitAttempt,
 };

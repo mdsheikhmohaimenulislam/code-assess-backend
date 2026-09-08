@@ -9,22 +9,16 @@ const router = Router();
 
 // Create bKash payment
 router.post(
-  "/:assessmentId",
-  auth(Role.CANDIDATE),
-  PaymentController.createPayment,
+	"/:assessmentId",
+	auth(Role.CANDIDATE),
+	PaymentController.createPayment,
 );
 
 // Execute bKash payment
 router.get(
-  "/execute/:id",
-  auth(Role.CANDIDATE),
-  PaymentController.executePayment,
+	"/execute/:id",
+	auth(Role.CANDIDATE),
+	PaymentController.executePayment,
 );
-
-
-
-
-
-
 
 export const PaymentRoutes = router;

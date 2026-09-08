@@ -1,4 +1,3 @@
-
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync.js";
 
@@ -6,44 +5,33 @@ import { EvaluationService } from "./evaluation.service.js";
 import type { Request, Response } from "express";
 import { AppError } from "../../utils/AppError.js";
 
-const evaluateSubmission = catchAsync(
-  async (req: Request, res: Response) => {
-    const userId = req.user?.userId;
-    const userRole = req.user?.role;
-    const answerId = req.params.id;
-    // console.log(answerId);
+const evaluateSubmission = catchAsync(async (req: Request, res: Response) => {
+	const userId = req.user?.userId;
+	const userRole = req.user?.role;
+	const answerId = req.params.id;
+	// console.log(answerId);
 
-    if (!userId || !userRole) {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        "Unauthorized",
-      );
-    }
+	if (!userId || !userRole) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+	}
 
-    if (!answerId) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Answer ID is required",
-      );
-    }
+	if (!answerId) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Answer ID is required");
+	}
 
-    const result =
-      await EvaluationService.evaluateAnswer(
-        answerId as string,
-        userId,
-        userRole,
-      );
+	const result = await EvaluationService.evaluateAnswer(
+		answerId as string,
+		userId,
+		userRole,
+	);
 
-    res.status(httpStatus.OK).json({
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "Answer evaluated successfully",
-      data: result,
-    });
-  },
-);
-
-
+	res.status(httpStatus.OK).json({
+		success: true,
+		statusCode: httpStatus.OK,
+		message: "Answer evaluated successfully",
+		data: result,
+	});
+});
 
 // const getEvaluationBySubmission = async (
 //   req: Request,
@@ -82,7 +70,7 @@ const evaluateSubmission = catchAsync(
 // };
 
 export const EvaluationController = {
-  evaluateSubmission,
-//   getEvaluationBySubmission,
-//   getEvaluationById,
+	evaluateSubmission,
+	//   getEvaluationBySubmission,
+	//   getEvaluationById,
 };

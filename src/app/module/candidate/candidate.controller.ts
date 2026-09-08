@@ -2,159 +2,110 @@ import type { Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { CandidateService } from "./candidate.service.js";
 import { sendResponse } from "../../utils/sendResponse.js";
-import httpStatus from 'http-status';
+import httpStatus from "http-status";
 import { AppError } from "../../utils/AppError.js";
 
+const createCandidate = catchAsync(async (req: Request, res: Response) => {
+	const userId = req.user?.userId;
 
+	if (!userId) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+	}
 
-const createCandidate = catchAsync(
-  async (req: Request, res: Response) => {
-    const userId = req.user?.userId;
+	const result = await CandidateService.createCandidate(userId, req.body);
 
-    if (!userId) {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        "Unauthorized",
-      );
-    }
+	sendResponse(res, {
+		statusCode: httpStatus.CREATED,
+		success: true,
+		message: "Candidate profile created successfully",
+		data: result,
+	});
+});
 
-    const result =
-      await CandidateService.createCandidate(
-        userId,
-        req.body,
-      );
+const getMyCandidate = catchAsync(async (req: Request, res: Response) => {
+	const userId = req.user?.userId;
 
-    sendResponse(res, {
-      statusCode: httpStatus.CREATED,
-      success: true,
-      message:
-        "Candidate profile created successfully",
-      data: result,
-    });
-  },
-);
+	if (!userId) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+	}
 
+	const result = await CandidateService.getMyCandidate(userId);
 
-const getMyCandidate = catchAsync(
-  async (req: Request, res: Response) => {
-    const userId = req.user?.userId;
+	res.status(httpStatus.OK).json({
+		success: true,
+		message: "Candidate profile retrieved successfully",
+		data: result,
+	});
+});
 
-    if (!userId) {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        "Unauthorized",
-      );
-    }
+const getCandidateById = catchAsync(async (req: Request, res: Response) => {
+	const candidateId = req.params.id;
 
-    const result =
-      await CandidateService.getMyCandidate(userId);
+	if (!candidateId) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Candidate ID is required");
+	}
 
-    res.status(httpStatus.OK).json({
-      success: true,
-      message: "Candidate profile retrieved successfully",
-      data: result,
-    });
-  },
-);
+	const result = await CandidateService.getCandidateById(candidateId as string);
 
+	res.status(httpStatus.OK).json({
+		success: true,
+		message: "Candidate profile retrieved successfully",
+		data: result,
+	});
+});
 
-const getCandidateById = catchAsync(
-  async (req: Request, res: Response) => {
-    const candidateId = req.params.id;
+const updateCandidate = catchAsync(async (req: Request, res: Response) => {
+	const userId = req.user?.userId;
 
-    if (!candidateId) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Candidate ID is required",
-      );
-    }
+	if (!userId) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+	}
 
-    const result =
-      await CandidateService.getCandidateById(candidateId as string);
+	const candidateId = req.params.id;
 
-    res.status(httpStatus.OK).json({
-      success: true,
-      message: "Candidate profile retrieved successfully",
-      data: result,
-    });
-  },
-);
+	if (!candidateId) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Candidate ID is required");
+	}
 
+	const result = await CandidateService.updateCandidate(
+		userId,
+		candidateId as string,
+		req.body,
+	);
 
-const updateCandidate = catchAsync(
-  async (req: Request, res: Response) => {
-    const userId = req.user?.userId;
+	res.status(httpStatus.OK).json({
+		success: true,
+		message: "Candidate profile updated successfully",
+		data: result,
+	});
+});
 
-    if (!userId) {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        "Unauthorized",
-      );
-    }
+const deleteCandidate = catchAsync(async (req: Request, res: Response) => {
+	const userId = req.user?.userId;
 
-    const candidateId = req.params.id;
+	if (!userId) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
+	}
 
-    if (!candidateId) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Candidate ID is required",
-      );
-    }
+	const candidateId = req.params.id;
 
-    const result =
-      await CandidateService.updateCandidate(
-        userId,
-        candidateId as string,
-        req.body,
-      );
+	if (!candidateId) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Candidate ID is required");
+	}
 
-    res.status(httpStatus.OK).json({
-      success: true,
-      message: "Candidate profile updated successfully",
-      data: result,
-    });
-  },
-);
+	await CandidateService.deleteCandidate(userId, candidateId as string);
 
-
-const deleteCandidate = catchAsync(
-  async (req: Request, res: Response) => {
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        "Unauthorized",
-      );
-    }
-
-    const candidateId = req.params.id;
-
-    if (!candidateId) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        "Candidate ID is required",
-      );
-    }
-
-
-      await CandidateService.deleteCandidate(
-        userId,
-        candidateId as string,
-      );
-
-    res.status(httpStatus.OK).json({
-      success: true,
-      message: "Candidate profile deleted successfully",
-      data: null,
-    });
-  },
-);
+	res.status(httpStatus.OK).json({
+		success: true,
+		message: "Candidate profile deleted successfully",
+		data: null,
+	});
+});
 
 export const CandidateController = {
-  createCandidate,
-  getMyCandidate,
-  getCandidateById,
-  updateCandidate,
-  deleteCandidate,
+	createCandidate,
+	getMyCandidate,
+	getCandidateById,
+	updateCandidate,
+	deleteCandidate,
 };

@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const createMCQAnswerValidationSchema = z.object({
-  attemptId: z.string().uuid("Invalid attempt ID"),
+	attemptId: z.string().uuid("Invalid attempt ID"),
 
-  problemId: z.string().uuid("Invalid problem ID"),
+	problemId: z.string().uuid("Invalid problem ID"),
 
-  selectedOptionId: z.string().uuid("Invalid option ID"),
+	selectedOptionId: z.string().uuid("Invalid option ID"),
 });
