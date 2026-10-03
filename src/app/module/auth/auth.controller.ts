@@ -159,39 +159,20 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+
+
 const googleLogin = catchAsync(async (req: Request, res: Response) => {
-  const user = req.user;
+  const result = await AuthService.googleLogin(req.body);
 
-  if (!user) {
-    return res.redirect(
-      `${config.frontend_url}/login?error=google-login-failed`,
-    );
-  }
-
-  const jwtPayload = {
-    userId: user.userId,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-  };
-
-  const accessToken = jwtUtils.createToken(
-    jwtPayload,
-    config.jwt_access_secret,
-    config.jwt_access_expires_in as SignOptions,
-  );
-
-  const refreshToken = jwtUtils.createToken(
-    jwtPayload,
-    config.jwt_refresh_secret,
-    config.jwt_refresh_expires_in as SignOptions,
-  );
+  const { accessToken, refreshToken } = result;
 
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: config.node_env === "development" ? false : true,
     sameSite: config.node_env === "development" ? "lax" : "none",
     maxAge: 1000 * 60 * 60 * 24,
+    path: "/",
   });
 
   res.cookie("refreshToken", refreshToken, {
@@ -199,11 +180,71 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
     secure: config.node_env === "development" ? false : true,
     sameSite: config.node_env === "development" ? "lax" : "none",
     maxAge: 1000 * 60 * 60 * 24 * 7,
+    path: "/",
   });
 
-  return res.redirect(
-    `${config.frontend_url}/google-success?role=${user.role}`,
-  );
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Google login successful",
+    data: {
+      accessToken,
+      refreshToken,
+    },
+  });
+});
+
+
+
+
+
+
+
+// const googleLogin = catchAsync(async (req: Request, res: Response) => {
+//   const result = await AuthService.googleLogin(req.body);
+
+//   const { accessToken, refreshToken } = result;
+
+//   const isProduction = process.env.NODE_ENV === "production";
+
+//   res.cookie("accessToken", accessToken, {
+//     httpOnly: true,
+//     secure: config.node_env === "development" ? false : true,
+//     sameSite: config.node_env === "development" ? "lax" : "none",
+//     maxAge: 1000 * 60 * 60 * 24,
+//     path: "/",
+//   });
+
+//   res.cookie("refreshToken", refreshToken, {
+//     httpOnly: true,
+//     secure: config.node_env === "development" ? false : true,
+//     sameSite: config.node_env === "development" ? "lax" : "none",
+//     maxAge: 1000 * 60 * 60 * 24 * 7,
+//     path: "/",
+//   });
+
+//   sendResponse(res, {
+//     statusCode: httpStatus.OK,
+//     success: true,
+//     message: "New tokens generated successfully",
+//     data: {
+//       accessToken,
+//       refreshToken,
+//     },
+//   });
+// });
+
+
+const logout = catchAsync(async (req: Request, res: Response) => {
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User Logged Out Successfully.",
+    data: null,
+  });
 });
 
 export const AuthController = {
@@ -215,4 +256,5 @@ export const AuthController = {
   googleLogin,
   forgotPassword,
   resetPassword,
+  logout
 };

@@ -5,21 +5,22 @@ import { auth } from "../../middlewares/checkAuth.js";
 const router = Router();
 // Create bKash payment
 router.post(
-	"/:assessmentId",
-	auth(Role.CANDIDATE),
-	PaymentController.createPayment,
+  "/:assessmentId",
+  auth(Role.CANDIDATE),
+  PaymentController.createPayment,
 );
 // Execute bKash payment
 router.get(
-	"/execute/:id",
-	auth(Role.CANDIDATE),
-	PaymentController.executePayment,
+  "/execute/:id",
+  auth(Role.CANDIDATE),
+  PaymentController.executePayment,
 );
 
 router.get(
   "/callback",
-  	auth(Role.CANDIDATE),
+  auth(Role.CANDIDATE),
   PaymentController.paymentCallback,
 );
-export const PaymentRoutes = router;
+
+export const paymentRouter = router;
 //# sourceMappingURL=payment.route.js.map

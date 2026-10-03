@@ -6,7 +6,6 @@ import { catchAsync } from "../utils/catchAsync.js";
 import { AppError } from "../utils/AppError.js";
 import { jwtUtils } from "../utils/jwt.js";
 import config from "../config/index.js";
-
 import type { Role } from "../../generated/prisma/enums.js";
 import { prisma } from "../lib/prisma.js";
 
@@ -25,93 +24,75 @@ declare global {
   }
 }
 
-// auth(Role.ADMIN, Role.USER, Role.AUTHOR)
-//
-// auth() => requiredRoles => [Role.ADMIN, Role.USER, Role.AUTHOR]
-
 export const auth = (...requiredRoles: Role[]) => {
-  return catchAsync(
-    async (
-      req: Request,
-      res: Response,
-      next: NextFunction,
-    ) => {
-      const token = req.cookies.accessToken
-        ? req.cookies.accessToken
-        : req.headers.authorization?.startsWith("Bearer ")
-          ? req.headers.authorization?.split(" ")[1]
-          : req.headers.authorization;
+  return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const token = req.cookies.accessToken
+      ? req.cookies.accessToken
+      : req.headers.authorization?.startsWith("Bearer ")
+        ? req.headers.authorization.split(" ")[1]
+        : req.headers.authorization;
 
-      if (!token) {
-        throw new AppError(
-          httpStatus.UNAUTHORIZED,
-          "You are not logged in. Please log in to access this resource.",
-        );
-      }
-
-      const verifiedToken = jwtUtils.verifyToken(
-        token,
-        config.jwt_access_secret,
+    if (!token) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "You are not logged in. Please log in to access this resource.",
       );
+    }
 
-      if (!verifiedToken.success) {
-        throw new AppError(
-          httpStatus.UNAUTHORIZED,
-          verifiedToken.error,
-        );
-      }
+    const verifiedToken = jwtUtils.verifyToken(token, config.jwt_access_secret);
 
-      const { email, name, userId, role } =
-        verifiedToken.data as JwtPayload;
+    if (!verifiedToken.success) {
+      throw new AppError(httpStatus.UNAUTHORIZED, verifiedToken.error);
+    }
 
-      if (
-        requiredRoles.length &&
-        !requiredRoles.includes(role as Role)
-      ) {
-        throw new AppError(
-          httpStatus.FORBIDDEN,
-          "Forbidden. You don't have permission to access this resource.",
-        );
-      }
+    const { email, name, userId, role } = verifiedToken.data as JwtPayload & {
+      userId: string;
+      name: string;
+      email: string;
+      role: Role;
+    };
 
-      const user = await prisma.user.findUnique({
-        where: {
-          id: userId,
-          email,
-          name,
-          role: role as Role,
-        },
-      });
+    if (!userId) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Invalid authentication token.",
+      );
+    }
 
-      if (!user) {
-        throw new AppError(
-          httpStatus.NOT_FOUND,
-          "User not found. Please log in again.",
-        );
-      }
+    if (requiredRoles.length && !requiredRoles.includes(role)) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "Forbidden. You don't have permission to access this resource.",
+      );
+    }
 
-      if (user.status === "BLOCKED") {
-        throw new AppError(
-          httpStatus.FORBIDDEN,
-          "Your account has been blocked. Please contact support.",
-        );
-      }
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
 
-      if (user.status === "INACTIVE") {
-        throw new AppError(
-          httpStatus.FORBIDDEN,
-          "Your account is inactive. Please contact support.",
-        );
-      }
+    if (!user) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        "User not found. Please log in again.",
+      );
+    }
 
-      req.user = {
-        email,
-        name,
-        userId,
-        role: role as Role,
-      };
+    if (user.status === "BLOCKED") {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "Your account has been blocked. Please contact support.",
+      );
+    }
 
-      next();
-    },
-  );
+    req.user = {
+      email: user.email,
+      name: user.name,
+      userId: user.id,
+      role: user.role,
+    };
+
+    next();
+  });
 };
