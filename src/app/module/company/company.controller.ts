@@ -113,10 +113,26 @@ const deleteCompany = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+
+const getAllCompanies = catchAsync(
+  async (_req: Request, res: Response) => {
+    const result = await CompanyService.getAllCompanies();
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Companies retrieved successfully",
+      data: result,
+    });
+  },
+);
+
+
 export const CompanyController = {
 	createCompany,
 	getMyCompany,
 	getCompanyById,
 	updateCompany,
 	deleteCompany,
+	getAllCompanies
 };

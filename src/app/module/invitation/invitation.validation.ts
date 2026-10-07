@@ -7,7 +7,7 @@ export const createInvitationValidationSchema = z.object({
 
 	userId: z.string().uuid("Invalid user ID"),
 
-	email: z.string().email("Invalid email address"),
+	email: z.string().email("Invalid email address").optional(),
 
 	expiresAt: z.coerce
 		.date()

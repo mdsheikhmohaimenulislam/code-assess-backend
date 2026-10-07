@@ -126,12 +126,12 @@ const createInvitation = async (
 	}
 
 	// Email must match candidate account
-	if (candidateUser.email.toLowerCase() !== email.toLowerCase()) {
-		throw new AppError(
-			httpStatus.BAD_REQUEST,
-			"Email does not match candidate account",
-		);
-	}
+	// if (candidateUser.email.toLowerCase() !== email.toLowerCase()) {
+	// 	throw new AppError(
+	// 		httpStatus.BAD_REQUEST,
+	// 		"Email does not match candidate account",
+	// 	);
+	// }
 
 	// Check duplicate invitation
 	const existingInvitation = await prisma.invitation.findUnique({

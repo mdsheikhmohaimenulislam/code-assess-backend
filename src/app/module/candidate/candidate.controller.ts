@@ -5,6 +5,21 @@ import { sendResponse } from "../../utils/sendResponse.js";
 import httpStatus from "http-status";
 import { AppError } from "../../utils/AppError.js";
 
+
+const getAllCandidate = catchAsync(async (req: Request, res: Response) => {
+
+
+
+	const result = await CandidateService.getAllCandidate();
+
+	res.status(httpStatus.OK).json({
+		success: true,
+		message: "All Candidate retrieved successfully",
+		data: result,
+	});
+});
+
+
 const createCandidate = catchAsync(async (req: Request, res: Response) => {
 	const userId = req.user?.userId;
 
@@ -108,4 +123,5 @@ export const CandidateController = {
 	getCandidateById,
 	updateCandidate,
 	deleteCandidate,
+	getAllCandidate
 };

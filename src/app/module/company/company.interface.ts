@@ -12,3 +12,12 @@ export interface UpdateCompanyPayload {
 	website?: string;
 	logo?: string;
 }
+
+
+export interface GetAllCompaniesParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}

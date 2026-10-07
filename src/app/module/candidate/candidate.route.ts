@@ -24,6 +24,11 @@ router.get(
 	auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
 	CandidateController.getCandidateById,
 );
+router.get(
+	"/",
+	auth(Role.ADMIN, Role.COMPANY, Role.CANDIDATE),
+	CandidateController.getAllCandidate,
+);
 
 router.patch(
 	"/:id",

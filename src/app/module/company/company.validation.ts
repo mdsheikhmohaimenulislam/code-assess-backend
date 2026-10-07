@@ -1,23 +1,23 @@
 import { z } from "zod";
 
 export const createCompanyValidationSchema = z.object({
-	userId: z.string().uuid("Invalid user ID").optional(),
+  userId: z.string().uuid("Invalid user ID"),
 
-	companyName: z
-		.string()
-		.trim()
-		.min(2, "Company name must be at least 2 characters")
-		.max(200, "Company name cannot exceed 200 characters"),
+  companyName: z
+    .string()
+    .trim()
+    .min(2, "Company name must be at least 2 characters")
+    .max(200, "Company name cannot exceed 200 characters"),
 
-	description: z
-		.string()
-		.trim()
-		.max(2000, "Description cannot exceed 2000 characters")
-		.optional(),
+  description: z
+    .string()
+    .trim()
+    .max(2000, "Description cannot exceed 2000 characters")
+   ,
 
-	website: z.string().url("Invalid website URL").optional(),
+  website: z.string().url("Invalid website URL"),
 
-	logo: z.string().url("Invalid logo URL").optional(),
+  logo: z.string().url("Invalid logo URL"),
 });
 
 export const updateCompanyValidationSchema = z

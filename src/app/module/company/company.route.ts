@@ -13,7 +13,7 @@ const router = Router();
 // Create company profile
 router.post(
 	"/",
-	auth(Role.COMPANY, Role.ADMIN),
+	auth(Role.COMPANY),
 	validateRequest(createCompanyValidationSchema),
 	CompanyController.createCompany,
 );
@@ -42,5 +42,13 @@ router.delete(
 	auth(Role.ADMIN, Role.COMPANY),
 	CompanyController.deleteCompany,
 );
+
+
+router.get(
+  "/",
+  auth(Role.ADMIN, Role.CANDIDATE),
+  CompanyController.getAllCompanies,
+);
+
 
 export const CompanyRoutes = router;

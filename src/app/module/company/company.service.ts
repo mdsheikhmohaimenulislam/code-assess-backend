@@ -1,8 +1,10 @@
+import { Prisma } from "../../../generated/prisma/client.js";
 import { AssessmentStatus, Role } from "../../../generated/prisma/enums.js";
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import type {
 	CreateCompanyPayload,
+	GetAllCompaniesParams,
 	UpdateCompanyPayload,
 } from "./company.interface.js";
 import httpStatus from "http-status";
@@ -446,10 +448,24 @@ const deleteCompany = async (
 	return deletedCompany;
 };
 
+
+
+const getAllCompanies = async () => {
+  const companies = await prisma.companyProfile.findMany();
+
+  return companies;
+};
+
+
+
+
+
+
 export const CompanyService = {
 	createCompany,
 	getMyCompany,
 	getCompanyById,
 	updateCompany,
 	deleteCompany,
+	getAllCompanies
 };
