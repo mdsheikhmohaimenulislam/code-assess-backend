@@ -213,8 +213,43 @@ const paymentCallback = catchAsync(
     );
   },
 );
+
+
+
+const getAllPayments = catchAsync(
+  async (req: Request, res: Response) => {
+    const page = Math.max(
+      1,
+      Number.parseInt(String(req.query.page ?? "1"), 10) || 1,
+    );
+
+    const limit = Math.min(
+      100,
+      Math.max(
+        1,
+        Number.parseInt(String(req.query.limit ?? "10"), 10) || 10,
+      ),
+    );
+
+    const result = await PaymentService.getAllPayments(
+      page,
+      limit,
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Payments retrieved successfully",
+      data: result.data,
+      meta: result.meta,
+    });
+  },
+);
+
+
 export const PaymentController = {
   createPayment,
   executePayment,
   paymentCallback,
+  getAllPayments
 };

@@ -382,10 +382,62 @@ const markPaymentCancelled = async (
   });
 };
 
+
+
+
+
+
+const getAllPayments = async (
+  page: number,
+  limit: number,
+) => {
+  const skip = (page - 1) * limit;
+
+  const [payments, total] = await prisma.$transaction([
+    prisma.payment.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        problem: {
+          select: {
+            id: true,
+            title: true,
+            price: true,
+          },
+        },
+      },
+    }),
+    prisma.payment.count(),
+  ]);
+
+  return {
+    data: payments,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+
+
 export const PaymentService = {
   createPayment,
   executePayment,
   executePaymentByBkashId,
   markPaymentFailed,
   markPaymentCancelled,
+  getAllPayments
 };

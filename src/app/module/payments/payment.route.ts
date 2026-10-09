@@ -52,4 +52,10 @@ router.get(
   PaymentController.paymentCallback,
 );
 
+router.get(
+  "/",
+  auth(Role.CANDIDATE,Role.ADMIN,Role.COMPANY),
+  PaymentController.getAllPayments,
+);
+
 export const paymentRouter = router;
