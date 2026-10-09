@@ -1,31 +1,24 @@
 model User {
-  id            String     @id @default(uuid())
-  name          String
-  email         String     @unique
-  password      String?
-  googleId      String?    @unique
-    authProvider       AuthProvider @default(CREDENTIAL)
-  role          Role       @default(CANDIDATE)
-  status        UserStatus @default(ACTIVE)
-  emailVerified Boolean    @default(false)
-
-  imageUrl String? @default("")
-
-  companyProfile   CompanyProfile?
-  candidateProfile CandidateProfile?
-
-  isDeleted Boolean   @default(false)
-  deletedAt DateTime?
-
+  id                 String            @id @default(uuid())
+  name               String
+  email              String            @unique
+  password           String?
+  googleId           String?           @unique
+  authProvider       AuthProvider      @default(CREDENTIAL)
+  role               Role              @default(CANDIDATE)
+  status             UserStatus        @default(ACTIVE)
+  emailVerified      Boolean           @default(false)
+  imageUrl           String?           @default("")
+  isDeleted          Boolean           @default(false)
+  deletedAt          DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
   assessmentsCreated Assessment[]
+  candidateProfile   CandidateProfile?
+  companyProfile     CompanyProfile?
+  payments           Payment[]
   problemsCreated    Problem[]
-
-  invitations Invitation[]
-  attempts    Attempt[]
-  payments    Payment[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  results            Result[]
 
   @@index([email])
   @@index([role])

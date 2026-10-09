@@ -11,27 +11,12 @@ enum UserStatus {
   DELETED
 }
 
-
-
 enum AssessmentStatus {
   DRAFT
   PUBLISHED
   ONGOING
   COMPLETED
   CANCELLED
-}
-
-enum InvitationStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  EXPIRED
-}
-
-enum AttemptStatus {
-  IN_PROGRESS
-  SUBMITTED
-  EXPIRED
 }
 
 enum ProgrammingLanguage {
@@ -41,27 +26,14 @@ enum ProgrammingLanguage {
   JAVA
   CPP
 }
+
 enum Difficulty {
   EASY
   MEDIUM
   HARD
 }
-enum ProblemType {
-  MCQ
-  CODING
-}
-
-enum SubmissionStatus {
-  PENDING
-  ACCEPTED
-  WRONG_ANSWER
-  TIME_LIMIT
-  RUNTIME_ERROR
-  COMPILATION_ERROR
-}
 
 enum PaymentStatus {
-
   PENDING
   PAID
   FAILED
@@ -73,6 +45,7 @@ enum PaymentMethod {
   STRIPE
   BKASH
 }
+
 enum AssessmentAccessType {
   FREE
   PAID

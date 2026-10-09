@@ -1,355 +1,268 @@
 import {
-	AssessmentAccessType,
-	AttemptStatus,
-	PaymentStatus,
-	ProblemType,
-	ProgrammingLanguage,
+  AssessmentAccessType,
+  PaymentStatus,
 } from "../../../generated/prisma/enums.js";
+
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import httpStatus from "http-status";
 
-const createAnswer = async (
+interface ISubmitAnswerPayload {
+  problemId: string;
+  answer: string;
+}
+
+const submitAnswer = async (
   userId: string,
-  attemptId: string,
-  problemId: string,
-  answer: string,
-  language: ProgrammingLanguage,
+  assessmentId: string,
+  payload: ISubmitAnswerPayload,
 ) => {
   // --------------------------------
-  // 1. Find candidate profile
+  // 1. Find assessment
   // --------------------------------
 
-  const candidate = await prisma.candidateProfile.findUnique({
-	where: {
-	  userId,
-	},
-	select: {
-	  id: true,
-	},
+  const assessment = await prisma.assessment.findUnique({
+    where: {
+      id: assessmentId,
+    },
+    select: {
+      id: true,
+      title: true,
+      accessType: true,
+      price: true,
+      status: true,
+    },
   });
 
-  if (!candidate) {
-	throw new AppError(
-	  httpStatus.NOT_FOUND,
-	  "Candidate profile not found",
-	);
+  if (!assessment) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Assessment not found",
+    );
   }
 
   // --------------------------------
-  // 2. Find attempt + assessment
+  // 2. Check assessment status
   // --------------------------------
 
-  const attempt = await prisma.attempt.findUnique({
-	where: {
-	  id: attemptId,
-	},
-	select: {
-	  id: true,
-	  assessmentId: true,
-	  candidateId: true,
-	  status: true,
-	  expiresAt: true,
-
-	  assessment: {
-		select: {
-		  id: true,
-		  title: true,
-		  accessType: true,
-		  price: true,
-		},
-	  },
-	},
-  });
-
-  if (!attempt) {
-	throw new AppError(
-	  httpStatus.NOT_FOUND,
-	  "Attempt not found",
-	);
+  if (
+    assessment.status !== "PUBLISHED" &&
+    assessment.status !== "ONGOING"
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "This assessment is not available",
+    );
   }
 
   // --------------------------------
-  // 3. Check attempt ownership
+  // 3. Check payment for PAID assessment
   // --------------------------------
 
-  if (attempt.candidateId !== candidate.id) {
-	throw new AppError(
-	  httpStatus.FORBIDDEN,
-	  "You are not allowed to answer this attempt",
-	);
+  if (
+    assessment.accessType === AssessmentAccessType.PAID
+  ) {
+    const payment = await prisma.payment.findFirst({
+      where: {
+        userId,
+        assessmentId,
+        status: PaymentStatus.PAID,
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!payment) {
+      throw new AppError(
+        httpStatus.PAYMENT_REQUIRED,
+        "This assessment is paid. Please complete the payment before submitting an answer.",
+      );
+    }
   }
 
   // --------------------------------
-  // 4. Check attempt status
-  // --------------------------------
-
-  if (attempt.status !== AttemptStatus.IN_PROGRESS) {
-	throw new AppError(
-	  httpStatus.BAD_REQUEST,
-	  "Attempt is not active",
-	);
-  }
-
-  // --------------------------------
-  // 5. Check attempt expiry
-  // --------------------------------
-
-  if (attempt.expiresAt && new Date() >= attempt.expiresAt) {
-	await prisma.attempt.update({
-	  where: {
-		id: attemptId,
-	  },
-	  data: {
-		status: AttemptStatus.EXPIRED,
-	  },
-	});
-
-	throw new AppError(
-	  httpStatus.BAD_REQUEST,
-	  "Attempt time has expired",
-	);
-  }
-
-  // --------------------------------
-  // 6. Check assessment payment
-  // --------------------------------
-
-  if (attempt.assessment.accessType === AssessmentAccessType.PAID) {
-	const payment = await prisma.payment.findFirst({
-	  where: {
-		userId,
-		assessmentId: attempt.assessmentId,
-		status: PaymentStatus.PAID,
-	  },
-	  select: {
-		id: true,
-		status: true,
-		paymentMethod: true,
-	  },
-	});
-
-	if (!payment) {
-	  throw new AppError(
-		httpStatus.PAYMENT_REQUIRED,
-		"This assessment is paid. Please complete the payment before answering.",
-	  );
-	}
-  }
-
-  // --------------------------------
-  // 7. Find problem
+  // 4. Find problem
   // --------------------------------
 
   const problem = await prisma.problem.findUnique({
-	where: {
-	  id: problemId,
-	},
-	select: {
-	  id: true,
-	  type: true,
-	},
+    where: {
+      id: payload.problemId,
+    },
+    select: {
+      id: true,
+      assessmentId: true,
+      answer: true,
+      marks: true,
+    },
   });
 
   if (!problem) {
-	throw new AppError(
-	  httpStatus.NOT_FOUND,
-	  "Problem not found",
-	);
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Problem not found",
+    );
   }
 
   // --------------------------------
-  // 8. Only coding problems
+  // 5. Check problem belongs to assessment
   // --------------------------------
 
-  if (problem.type !== ProblemType.CODING) {
-	throw new AppError(
-	  httpStatus.BAD_REQUEST,
-	  "This endpoint is only for coding problems",
-	);
+  if (problem.assessmentId !== assessmentId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Problem does not belong to this assessment",
+    );
   }
 
   // --------------------------------
-  // 9. Check problem belongs to assessment
+  // 6. Validate candidate answer
   // --------------------------------
 
-  const assessmentProblem =
-	await prisma.assessmentProblem.findUnique({
-	  where: {
-		assessmentId_problemId: {
-		  assessmentId: attempt.assessmentId,
-		  problemId,
-		},
-	  },
-	  select: {
-		id: true,
-	  },
-	});
-
-  if (!assessmentProblem) {
-	throw new AppError(
-	  httpStatus.BAD_REQUEST,
-	  "Problem does not belong to this assessment",
-	);
-  }
-
-  // --------------------------------
-  // 10. Validate answer
-  // --------------------------------
-
-  const cleanedAnswer = answer.trim();
+  const cleanedAnswer = payload.answer.trim();
 
   if (!cleanedAnswer) {
-	throw new AppError(
-	  httpStatus.BAD_REQUEST,
-	  "Answer cannot be empty",
-	);
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Answer cannot be empty",
+    );
   }
 
   // --------------------------------
-  // 11. Save / Update Answer
+  // 7. Find or create Result
   // --------------------------------
 
-  const result = await prisma.answer.upsert({
-	where: {
-	  attemptId_problemId: {
-		attemptId,
-		problemId,
-	  },
-	},
-
-	create: {
-	  attemptId,
-	  problemId,
-	  answer: cleanedAnswer,
-	  language,
-	},
-
-	update: {
-	  answer: cleanedAnswer,
-	  language,
-
-	  // Candidate code change করলে
-	  // previous evaluation reset হবে
-	  marks: null,
-	  isCorrect: null,
-	},
-
-	select: {
-	  id: true,
-	  attemptId: true,
-	  problemId: true,
-	  answer: true,
-	  language: true,
-	  marks: true,
-	  isCorrect: true,
-	  createdAt: true,
-	  updatedAt: true,
-	},
+  let result = await prisma.result.findUnique({
+    where: {
+      candidateId_assessmentId: {
+        candidateId: userId,
+        assessmentId,
+      },
+    },
   });
 
-  return result;
+  if (!result) {
+    result = await prisma.result.create({
+      data: {
+        candidateId: userId,
+        assessmentId,
+        totalMarks: 0,
+        obtainedMarks: 0,
+        percentage: 0,
+        passed: false,
+      },
+    });
+  }
+
+  // --------------------------------
+  // 8. Evaluate answer
+  // --------------------------------
+
+  const isCorrect =
+    cleanedAnswer.toLowerCase() ===
+    problem.answer.trim().toLowerCase();
+
+  const obtainedMark = isCorrect ? problem.marks : 0;
+
+  // --------------------------------
+  // 9. Save / update ResultAnswer
+  // --------------------------------
+
+  await prisma.resultAnswer.upsert({
+    where: {
+      resultId_problemId: {
+        resultId: result.id,
+        problemId: problem.id,
+      },
+    },
+
+    create: {
+      resultId: result.id,
+      problemId: problem.id,
+      answer: cleanedAnswer,
+      obtainedMark,
+      isCorrect,
+    },
+
+    update: {
+      answer: cleanedAnswer,
+      obtainedMark,
+      isCorrect,
+    },
+  });
+
+  // --------------------------------
+  // 10. Calculate result
+  // --------------------------------
+
+  const resultAnswers = await prisma.resultAnswer.findMany({
+    where: {
+      resultId: result.id,
+    },
+    select: {
+      obtainedMark: true,
+    },
+  });
+
+  const totalMarks = await prisma.problem.aggregate({
+    where: {
+      assessmentId,
+    },
+    _sum: {
+      marks: true,
+    },
+  });
+
+  const totalAssessmentMarks =
+    totalMarks._sum.marks ?? 0;
+
+  const obtainedMarks = resultAnswers.reduce(
+    (total, item) => total + item.obtainedMark,
+    0,
+  );
+
+  const percentage =
+    totalAssessmentMarks > 0
+      ? (obtainedMarks / totalAssessmentMarks) * 100
+      : 0;
+
+  const passed = percentage >= 40;
+
+  // --------------------------------
+  // 11. Update Result
+  // --------------------------------
+
+  const updatedResult = await prisma.result.update({
+    where: {
+      id: result.id,
+    },
+
+    data: {
+      totalMarks: totalAssessmentMarks,
+      obtainedMarks,
+      percentage,
+      passed,
+    },
+
+    include: {
+      resultAnswers: {
+        select: {
+          id: true,
+          problemId: true,
+          answer: true,
+          obtainedMark: true,
+          isCorrect: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
+  });
+
+  return updatedResult;
 };
 
-// const getAnswers = async (
-//   userId: string,
-//   userRole: string,
-//   attemptId: string
-// ) => {
-//   const attempt = await prisma.attempt.findUnique({
-//     where: { id: attemptId },
-//     include: {
-//       candidate: true,
-//     },
-//   });
-
-//   if (!attempt) {
-//     throw new Error("Attempt not found");
-//   }
-
-//   if (
-//     userRole === "CANDIDATE" &&
-//     attempt.candidate.userId !== userId
-//   ) {
-//     throw new Error("You are not allowed to view these answers");
-//   }
-
-//   return prisma.answer.findMany({
-//     where: { attemptId },
-//     include: {
-//       problem: true,
-//     },
-//   });
-// };
-
-// const getAnswerById = async (
-//   userId: string,
-//   userRole: string,
-//   id: string
-// ) => {
-//   const answer = await prisma.answer.findUnique({
-//     where: { id },
-//     include: {
-//       attempt: {
-//         include: {
-//           candidate: true,
-//         },
-//       },
-//       problem: true,
-//     },
-//   });
-
-//   if (!answer) {
-//     throw new Error("Answer not found");
-//   }
-
-//   if (
-//     userRole === "CANDIDATE" &&
-//     answer.attempt.candidate.userId !== userId
-//   ) {
-//     throw new Error("You are not allowed to view this answer");
-//   }
-
-//   return answer;
-// };
-
-// const updateAnswer = async (
-//   userId: string,
-//   id: string,
-//   answer: string
-// ) => {
-//   const existing = await prisma.answer.findUnique({
-//     where: { id },
-//     include: {
-//       attempt: {
-//         include: {
-//           candidate: true,
-//         },
-//       },
-//     },
-//   });
-
-//   if (!existing) {
-//     throw new Error("Answer not found");
-//   }
-
-//   if (existing.attempt.candidate.userId !== userId) {
-//     throw new Error("You are not allowed to update this answer");
-//   }
-
-//   if (existing.attempt.status !== AttemptStatus.IN_PROGRESS) {
-//     throw new Error("Attempt is not active");
-//   }
-
-//   return prisma.answer.update({
-//     where: { id },
-//     data: { answer },
-//   });
-// };
-
 export const AnswerService = {
-	createAnswer,
-	//   getAnswers,
-	//   getAnswerById,
-	//   updateAnswer,
+  submitAnswer,
 };

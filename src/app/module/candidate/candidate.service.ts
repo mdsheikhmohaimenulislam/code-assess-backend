@@ -1,27 +1,62 @@
-import { Role, UserStatus } from "../../../generated/prisma/enums.js";
+import {
+  Role,
+  UserStatus,
+} from "../../../generated/prisma/enums.js";
+
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
+import httpStatus from "http-status";
+
 import type {
   CreateCandidatePayload,
   UpdateCandidatePayload,
 } from "./candidate.interface.js";
-import httpStatus from "http-status";
 
 const getAllCandidate = async () => {
-  const AllCandidate = await prisma.candidateProfile.findMany();
+  const candidates =
+    await prisma.candidateProfile.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
 
-  return AllCandidate;
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+            imageUrl: true,
+            emailVerified: true,
+            createdAt: true,
+
+            _count: {
+              select: {
+                results: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+  return candidates;
 };
 
 const createCandidate = async (
   userId: string,
   payload: CreateCandidatePayload,
 ) => {
-  // Check user
+  // --------------------------------
+  // 1. Find user
+  // --------------------------------
+
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
     },
+
     select: {
       id: true,
       name: true,
@@ -32,10 +67,16 @@ const createCandidate = async (
   });
 
   if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "User not found",
+    );
   }
 
-  // User must be a candidate
+  // --------------------------------
+  // 2. Check role
+  // --------------------------------
+
   if (user.role !== Role.CANDIDATE) {
     throw new AppError(
       httpStatus.FORBIDDEN,
@@ -43,127 +84,146 @@ const createCandidate = async (
     );
   }
 
-  // Account must be active
+  // --------------------------------
+  // 3. Check account status
+  // --------------------------------
+
   if (user.status !== UserStatus.ACTIVE) {
-    throw new AppError(httpStatus.FORBIDDEN, "Your account is not active");
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Your account is not active",
+    );
   }
 
-  // Check existing profile
-  const existingProfile = await prisma.candidateProfile.findUnique({
-    where: {
-      userId,
-    },
-    select: {
-      id: true,
-    },
-  });
+  // --------------------------------
+  // 4. Check existing profile
+  // --------------------------------
+
+  const existingProfile =
+    await prisma.candidateProfile.findUnique({
+      where: {
+        userId,
+      },
+
+      select: {
+        id: true,
+      },
+    });
 
   if (existingProfile) {
-    throw new AppError(httpStatus.CONFLICT, "Candidate profile already exists");
+    throw new AppError(
+      httpStatus.CONFLICT,
+      "Candidate profile already exists",
+    );
   }
 
-  // Create candidate profile
-  const candidate = await prisma.candidateProfile.create({
-    data: {
-      userId,
+  // --------------------------------
+  // 5. Create profile
+  // --------------------------------
 
-      ...(payload.phone && {
+  const candidate =
+    await prisma.candidateProfile.create({
+      data: {
+        userId,
         phone: payload.phone,
-      }),
-
-      ...(payload.bio && {
         bio: payload.bio,
-      }),
-
-      ...(payload.githubUrl && {
         githubUrl: payload.githubUrl,
-      }),
-
-      ...(payload.linkedinUrl && {
         linkedinUrl: payload.linkedinUrl,
-      }),
-
-      ...(payload.resumeUrl && {
         resumeUrl: payload.resumeUrl,
-      }),
-    },
+      },
 
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+            imageUrl: true,
+          },
         },
       },
-    },
-  });
+    });
 
   return candidate;
 };
 
 const getMyCandidate = async (userId: string) => {
-  const candidate = await prisma.candidateProfile.findUnique({
-    where: {
-      userId,
-    },
-
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          status: true,
-        },
+  const candidate =
+    await prisma.candidateProfile.findUnique({
+      where: {
+        userId,
       },
 
-      _count: {
-        select: {
-          invitations: true,
-          attempts: true,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+            imageUrl: true,
+            emailVerified: true,
+            createdAt: true,
+
+            _count: {
+              select: {
+                results: true,
+              },
+            },
+          },
         },
       },
-    },
-  });
+    });
 
   if (!candidate) {
-    throw new AppError(httpStatus.NOT_FOUND, "Candidate profile not found");
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Candidate profile not found",
+    );
   }
 
   return candidate;
 };
 
-const getCandidateById = async (candidateId: string) => {
-  const candidate = await prisma.candidateProfile.findUnique({
-    where: {
-      id: candidateId,
-    },
-
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          status: true,
-        },
+const getCandidateById = async (
+  candidateId: string,
+) => {
+  const candidate =
+    await prisma.candidateProfile.findUnique({
+      where: {
+        id: candidateId,
       },
 
-      _count: {
-        select: {
-          invitations: true,
-          attempts: true,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+            imageUrl: true,
+            emailVerified: true,
+            createdAt: true,
+
+            _count: {
+              select: {
+                results: true,
+              },
+            },
+          },
         },
       },
-    },
-  });
+    });
 
   if (!candidate) {
-    throw new AppError(httpStatus.NOT_FOUND, "Candidate profile not found");
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Candidate profile not found",
+    );
   }
 
   return candidate;
@@ -174,26 +234,33 @@ const updateCandidate = async (
   candidateId: string,
   payload: UpdateCandidatePayload,
 ) => {
-  /**
-   * Find candidate profile
-   */
-  const candidate = await prisma.candidateProfile.findUnique({
-    where: {
-      id: candidateId,
-    },
-    select: {
-      id: true,
-      userId: true,
-    },
-  });
+  // --------------------------------
+  // 1. Find candidate
+  // --------------------------------
+
+  const candidate =
+    await prisma.candidateProfile.findUnique({
+      where: {
+        id: candidateId,
+      },
+
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
 
   if (!candidate) {
-    throw new AppError(httpStatus.NOT_FOUND, "Candidate profile not found");
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Candidate profile not found",
+    );
   }
 
-  /**
-   * Ownership check
-   */
+  // --------------------------------
+  // 2. Ownership check
+  // --------------------------------
+
   if (candidate.userId !== userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
@@ -201,73 +268,86 @@ const updateCandidate = async (
     );
   }
 
-  /**
-   * Update candidate profile
-   */
-  const updatedCandidate = await prisma.candidateProfile.update({
-    where: {
-      id: candidateId,
-    },
+  // --------------------------------
+  // 3. Update profile
+  // --------------------------------
 
-    data: {
-      ...(payload.phone !== undefined && {
-        phone: payload.phone,
-      }),
+  const updatedCandidate =
+    await prisma.candidateProfile.update({
+      where: {
+        id: candidateId,
+      },
 
-      ...(payload.bio !== undefined && {
-        bio: payload.bio,
-      }),
+      data: {
+        ...(payload.phone !== undefined && {
+          phone: payload.phone,
+        }),
 
-      ...(payload.githubUrl !== undefined && {
-        githubUrl: payload.githubUrl,
-      }),
+        ...(payload.bio !== undefined && {
+          bio: payload.bio,
+        }),
 
-      ...(payload.linkedinUrl !== undefined && {
-        linkedinUrl: payload.linkedinUrl,
-      }),
+        ...(payload.githubUrl !== undefined && {
+          githubUrl: payload.githubUrl,
+        }),
 
-      ...(payload.resumeUrl !== undefined && {
-        resumeUrl: payload.resumeUrl,
-      }),
-    },
+        ...(payload.linkedinUrl !== undefined && {
+          linkedinUrl: payload.linkedinUrl,
+        }),
 
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          status: true,
+        ...(payload.resumeUrl !== undefined && {
+          resumeUrl: payload.resumeUrl,
+        }),
+      },
+
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            status: true,
+            imageUrl: true,
+          },
         },
       },
-    },
-  });
+    });
 
   return updatedCandidate;
 };
 
-const deleteCandidate = async (userId: string, candidateId: string) => {
-  /**
-   * Find candidate profile
-   */
-  const candidate = await prisma.candidateProfile.findUnique({
-    where: {
-      id: candidateId,
-    },
-    select: {
-      id: true,
-      userId: true,
-    },
-  });
+const deleteCandidate = async (
+  userId: string,
+  candidateId: string,
+) => {
+  // --------------------------------
+  // 1. Find candidate
+  // --------------------------------
+
+  const candidate =
+    await prisma.candidateProfile.findUnique({
+      where: {
+        id: candidateId,
+      },
+
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
 
   if (!candidate) {
-    throw new AppError(httpStatus.NOT_FOUND, "Candidate profile not found");
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Candidate profile not found",
+    );
   }
 
-  /**
-   * Ownership check
-   */
+  // --------------------------------
+  // 2. Ownership check
+  // --------------------------------
+
   if (candidate.userId !== userId) {
     throw new AppError(
       httpStatus.FORBIDDEN,
@@ -275,9 +355,10 @@ const deleteCandidate = async (userId: string, candidateId: string) => {
     );
   }
 
-  /**
-   * Delete candidate profile
-   */
+  // --------------------------------
+  // 3. Delete profile
+  // --------------------------------
+
   await prisma.candidateProfile.delete({
     where: {
       id: candidateId,

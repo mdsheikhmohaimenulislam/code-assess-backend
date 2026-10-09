@@ -1,20 +1,40 @@
 model Result {
-  id            String  @id @default(uuid())
-  attemptId     String  @unique
-
+  id            String         @id @default(uuid())
+  candidateId   String
+  assessmentId  String
   totalMarks    Float
   obtainedMarks Float
   percentage    Float
   passed        Boolean
   rank          Int?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  resultAnswers ResultAnswer[]
+  assessment    Assessment     @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  candidate     User           @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
-  attempt Attempt @relation(fields: [attemptId],references: [id],onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  @@unique([candidateId, assessmentId])
+  @@index([candidateId])
+  @@index([assessmentId])
   @@index([passed])
   @@index([percentage])
-
   @@map("results")
+}
+
+model ResultAnswer {
+  id           String   @id @default(uuid())
+  resultId     String
+  problemId    String
+  answer       String
+  obtainedMark Float
+  isCorrect    Boolean?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  problem      Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  result       Result   @relation(fields: [resultId], references: [id], onDelete: Cascade)
+
+  @@unique([resultId, problemId])
+  @@index([resultId])
+  @@index([problemId])
+  @@map("result_answers")
 }

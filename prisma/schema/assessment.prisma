@@ -1,40 +1,20 @@
 model Assessment {
-  id           String           @id @default(uuid())
-  title        String
-  description  String?
-
-
-  duration     Int
-  startTime    DateTime?
-  endTime      DateTime?
-
-
-  totalMarks   Float
-  passingMarks Float
-
-  accessType   AssessmentAccessType @default(FREE)
-  price        Decimal?             @db.Decimal(10, 2)
-
-  status       AssessmentStatus @default(DRAFT)
-
-  companyId String
-  company   CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
+  id          String               @id @default(uuid())
+  title       String
+  description String?
+  accessType  AssessmentAccessType @default(FREE)
+  price       Decimal?             @db.Decimal(10, 2)
+  status      AssessmentStatus     @default(DRAFT)
   createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Restrict)
-
-  problems    AssessmentProblem[]
-  invitations Invitation[]
-  attempts    Attempt[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  createdBy   User                 @relation(fields: [createdById], references: [id])
   payments    Payment[]
+  problems    Problem[]
+  results     Result[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([companyId])
   @@index([createdById])
+  @@index([accessType])
   @@index([status])
-  @@index([startTime])
-    @@index([accessType])
   @@map("assessments")
 }

@@ -1,92 +1,140 @@
 import type { Request, Response } from "express";
+import httpStatus from "http-status";
+
 import { catchAsync } from "../../utils/catchAsync.js";
 import { AppError } from "../../utils/AppError.js";
-import httpStatus from "http-status";
-import { ResultService } from "./result.service.js";
 import { sendResponse } from "../../utils/sendResponse.js";
+import { ResultService } from "./result.service.js";
 
-const createResult = catchAsync(async (req: Request, res: Response) => {
-	const userId = req.user?.userId;
-	const userRole = req.user?.role;
 
-	const { id: attemptId } = req.params;
 
-	if (!userId || !userRole) {
-		throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized");
-	}
+const createResult = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const { assessmentId } = req.params;
 
-	if (!attemptId) {
-		throw new AppError(httpStatus.BAD_REQUEST, "Attempt ID is required");
-	}
+    if (!userId) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-	const result = await ResultService.createResult(
-		attemptId as string,
-		userId,
-		userRole,
-	);
+    if (!assessmentId) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Assessment ID is required",
+      );
+    }
 
-	sendResponse(res, {
-		statusCode: httpStatus.CREATED,
-		success: true,
-		message: "Result created successfully",
-		data: result,
-	});
-});
+    const result = await ResultService.createResult(
+      userId,
+      assessmentId as string,
+    );
 
-// const getResultByAttempt = async (
-//   req: Request,
-//   res: Response
-// ) => {
-//   const result =
-//     await ResultService.getResultByAttempt(
-//       req.user!.userId,
-//       req.user!.role,
-//       req.params.attemptId
-//     );
+    sendResponse(res, {
+      statusCode: httpStatus.CREATED,
+      success: true,
+      message: "Result created successfully",
+      data: result,
+    });
+  },
+);
 
-//   res.status(200).json({
-//     success: true,
-//     message: "Result retrieved successfully",
-//     data: result,
-//   });
-// };
+const getResultById = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const { id } = req.params;
 
-// const getResultById = async (
-//   req: Request,
-//   res: Response
-// ) => {
-//   const result = await ResultService.getResultById(
-//     req.user!.userId,
-//     req.user!.role,
-//     req.params.id
-//   );
+    if (!userId) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-//   res.status(200).json({
-//     success: true,
-//     message: "Result retrieved successfully",
-//     data: result,
-//   });
-// };
+    if (!id) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Result ID is required",
+      );
+    }
 
-// const getResults = async (
-//   req: Request,
-//   res: Response
-// ) => {
-//   const result = await ResultService.getResults(
-//     req.user!.userId,
-//     req.user!.role
-//   );
+    const result = await ResultService.getResultById(
+      userId,
+      id as string,
+    );
 
-//   res.status(200).json({
-//     success: true,
-//     message: "Results retrieved successfully",
-//     data: result,
-//   });
-// };
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Result retrieved successfully",
+      data: result,
+    });
+  },
+);
+
+const getMyResults = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
+
+    const results = await ResultService.getMyResults(
+      userId,
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Results retrieved successfully",
+      data: results,
+    });
+  },
+);
+
+const getAssessmentResults = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const { assessmentId } = req.params;
+
+    if (!userId) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
+
+    if (!assessmentId) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Assessment ID is required",
+      );
+    }
+
+    const results =
+      await ResultService.getAssessmentResults(
+        userId,
+        assessmentId as string,
+      );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Assessment results retrieved successfully",
+      data: results,
+    });
+  },
+);
 
 export const ResultController = {
-	createResult,
-	//   getResultByAttempt,
-	//   getResultById,
-	//   getResults,
+  createResult,
+  getResultById,
+  getMyResults,
+  getAssessmentResults,
 };

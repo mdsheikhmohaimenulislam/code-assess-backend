@@ -1,92 +1,45 @@
 import type { Request, Response } from "express";
+import httpStatus from "http-status";
+
 import { catchAsync } from "../../utils/catchAsync.js";
 import { AppError } from "../../utils/AppError.js";
-import httpStatus from "http-status";
-import { AnswerService } from "./answer.service.js";
 import { sendResponse } from "../../utils/sendResponse.js";
+import { AnswerService } from "./answer.service.js";
 
-const createAnswer = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
+const submitAnswer = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const { assessmentId } = req.params;
 
-  const { id } = req.params;
+    if (!userId) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Unauthorized",
+      );
+    }
 
-  const { problemId, answer, language } = req.body;
+    if (!assessmentId) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Assessment ID is required",
+      );
+    }
 
-  if (!userId) {
-	throw new AppError(
-	  httpStatus.UNAUTHORIZED,
-	  "Unauthorized",
-	);
-  }
+    const result = await AnswerService.submitAnswer(
+      userId,
+      assessmentId as string,
+      req.body,
+    );
 
-  if (!id) {
-	throw new AppError(
-	  httpStatus.BAD_REQUEST,
-	  "Attempt ID is required",
-	);
-  }
-
-  const result = await AnswerService.createAnswer(
-	userId,
-	id as string,
-	problemId,
-	answer,
-	language,
-  );
-
-  sendResponse(res, {
-	statusCode: httpStatus.OK,
-	success: true,
-	message: "Answer saved successfully",
-	data: result,
-  });
-});
-
-// const getAnswers = async (req: Request, res: Response) => {
-//   const result = await AnswerService.getAnswers(
-//     req.user!.userId,
-//     req.user!.role,
-//     req.params.attemptId
-//   );
-
-//   res.status(200).json({
-//     success: true,
-//     message: "Answers retrieved successfully",
-//     data: result,
-//   });
-// };
-
-// const getAnswerById = async (req: Request, res: Response) => {
-//   const result = await AnswerService.getAnswerById(
-//     req.user!.userId,
-//     req.user!.role,
-//     req.params.id
-//   );
-
-//   res.status(200).json({
-//     success: true,
-//     message: "Answer retrieved successfully",
-//     data: result,
-//   });
-// };
-
-// const updateAnswer = async (req: Request, res: Response) => {
-//   const result = await AnswerService.updateAnswer(
-//     req.user!.userId,
-//     req.params.id,
-//     req.body.answer
-//   );
-
-//   res.status(200).json({
-//     success: true,
-//     message: "Answer updated successfully",
-//     data: result,
-//   });
-// };
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Answer submitted successfully",
+      data: result,
+    });
+  },
+);
 
 export const AnswerController = {
-	createAnswer,
-	//   getAnswers,
-	//   getAnswerById,
-	//   updateAnswer,
+  submitAnswer,
 };

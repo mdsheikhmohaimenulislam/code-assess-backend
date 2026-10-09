@@ -1,18 +1,17 @@
 export interface CreateCompanyPayload {
-	userId?: string;
-	companyName: string;
-	description?: string;
-	website?: string;
-	logo?: string;
+  userId?: string;
+  companyName: string;
+  description?: string;
+  website?: string;
+  logo?: string;
 }
 
 export interface UpdateCompanyPayload {
-	companyName?: string;
-	description?: string;
-	website?: string;
-	logo?: string;
+  companyName?: string;
+  description?: string;
+  website?: string;
+  logo?: string;
 }
-
 
 export interface GetAllCompaniesParams {
   page?: number;

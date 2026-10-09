@@ -1,31 +1,28 @@
 model Problem {
-  id           String     @id @default(uuid())
-  title        String
-  description  String
-    type         ProblemType
-  difficulty   Difficulty @default(EASY)
-  category     String
-  inputFormat  String?
-  outputFormat String?
-  constraints  String?
-  timeLimit    Int?
-  memoryLimit  Int?
-
-  createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Restrict)
-
-  testCases          TestCase[]
-  mcqOptions         MCQOption[]
- mcqAnswers MCQAnswer[]
- answers Answer[]
-
-  assessmentProblems AssessmentProblem[]
-  submissions        Submission[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id            String         @id @default(uuid())
+  title         String
+  description   String
+  answer        String
+  marks         Float          @default(1)
+  difficulty    Difficulty     @default(EASY)
+  category      String
+  inputFormat   String?
+  outputFormat  String?
+  constraints   String?
+  timeLimit     Int?
+  memoryLimit   Int?
+  isPaid        Boolean        @default(false)
+  price         Float?
+  createdById   String
+  assessmentId  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  assessment    Assessment?    @relation(fields: [assessmentId], references: [id])
+  createdBy     User           @relation(fields: [createdById], references: [id])
+  resultAnswers ResultAnswer[]
+payments Payment[]
   @@index([createdById])
+  @@index([assessmentId])
   @@index([difficulty])
   @@index([category])
   @@map("problems")
