@@ -1,0 +1,23 @@
+model ProblemSubmission {
+  id           String   @id @default(uuid())
+  candidateId  String
+  problemId    String
+  language     String
+  code         String   @db.Text
+  startedAt    DateTime?
+  submittedAt  DateTime @default(now())
+  obtainedMark Float    @default(0)
+  status       String   @default("PENDING")
+  isCorrect    Boolean?
+  answer String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  candidate User    @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@index([problemId])
+  @@index([status])
+  @@map("problem_submissions")
+}

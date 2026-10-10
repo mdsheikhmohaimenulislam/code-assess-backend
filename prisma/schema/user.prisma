@@ -19,6 +19,7 @@ model User {
   payments           Payment[]
   problemsCreated    Problem[]
   results            Result[]
+  problemSubmissions ProblemSubmission[]
 
   @@index([email])
   @@index([role])

@@ -1,34 +1,24 @@
-
 import { z } from "zod";
 
 export const createAnswerValidationSchema = z
   .object({
     problemId: z.string().uuid("Invalid problem ID"),
 
-    // MCQ / written answer
-    answer: z.string().trim().max(50000).optional(),
+    language: z.enum([
+      "javascript",
+      "typescript",
+      "python",
+      "java",
+      "cpp",
+    ]),
 
-    // Coding submission
-    language: z
-      .enum(["javascript", "typescript", "python", "java", "cpp"])
-      .optional(),
+    code: z.string().trim().min(1).max(50000),
 
-    code: z.string().trim().max(50000).optional(),
+    startedAt: z.coerce.date(),
 
-    startedAt: z.coerce.date().optional(),
-    submittedAt: z.coerce.date().optional(),
+    submittedAt: z.coerce.date(),
   })
-  .refine(
-    (data) => Boolean(data.answer) || Boolean(data.code),
-    {
-      message: "Answer or code is required",
-      path: ["answer"],
-    },
-  )
-  .refine(
-    (data) => !data.code || Boolean(data.language),
-    {
-      message: "Programming language is required",
-      path: ["language"],
-    },
-  );
+  .refine((data) => data.startedAt <= data.submittedAt, {
+    message: "Start time cannot be after submission time",
+    path: ["submittedAt"],
+  });

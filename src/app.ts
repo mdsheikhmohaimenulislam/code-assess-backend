@@ -24,6 +24,7 @@ import { CandidateRoutes } from "./app/module/candidate/candidate.route.js";
 // import { MCQAnswerRoutes } from "./app/module/MCQOption/mcqAnswer.route.js";
 import { AnswerRoutes } from "./app/module/answer/answer.route.js";
 import { paymentRouter } from "./app/module/payments/payment.route.js";
+import { SubmissionRoutes } from "./app/module/submission/submission.routes.js";
 // import { EvaluationRoutes } from "./app/module/evaluation/evaluation.routes.js";
 // import { ResultRoutes } from "./app/module/result/result.route.js";
 // import {paymentRouter} from "./app/module/payments/payment.route.js"
@@ -60,7 +61,7 @@ app.use("/api/v1/answer", AnswerRoutes);
 // app.use("/api/v1/evaluations", EvaluationRoutes);
 // app.use("/api/v1/result/attempts", ResultRoutes);
 app.use("/api/v1/payment", paymentRouter);
-// app.use("/api/v1/mcq-answers", MCQAnswerRoutes);
+app.use("/submissions", SubmissionRoutes);
 
 // Basic route...
 app.get("/", async (req: Request, res: Response) => {

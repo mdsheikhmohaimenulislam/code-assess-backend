@@ -21,6 +21,9 @@ model Problem {
   createdBy     User           @relation(fields: [createdById], references: [id])
   resultAnswers ResultAnswer[]
 payments Payment[]
+submissions ProblemSubmission[]
+testCases ProblemTestCase[]
+
   @@index([createdById])
   @@index([assessmentId])
   @@index([difficulty])
