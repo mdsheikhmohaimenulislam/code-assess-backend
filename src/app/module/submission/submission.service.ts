@@ -66,6 +66,11 @@ const getSubmissionById = async (id: string) => {
   return submission;
 };
 
+
+
+
+
+
 // Get logged-in candidate's submissions
 const getMySubmissions = async (userId: string) => {
   return prisma.problemSubmission.findMany({

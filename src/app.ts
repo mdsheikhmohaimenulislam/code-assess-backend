@@ -61,7 +61,7 @@ app.use("/api/v1/answer", AnswerRoutes);
 // app.use("/api/v1/evaluations", EvaluationRoutes);
 // app.use("/api/v1/result/attempts", ResultRoutes);
 app.use("/api/v1/payment", paymentRouter);
-app.use("/submissions", SubmissionRoutes);
+app.use("/api/v1/submissions", SubmissionRoutes);
 
 // Basic route...
 app.get("/", async (req: Request, res: Response) => {
