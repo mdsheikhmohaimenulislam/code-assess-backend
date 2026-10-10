@@ -1,3 +1,4 @@
+
 import {
   AssessmentAccessType,
   PaymentStatus,
@@ -6,30 +7,20 @@ import {
 import { prisma } from "../../lib/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import httpStatus from "http-status";
+import { ISubmitAnswerPayload } from "./answer.interface.js";
 
-interface ISubmitAnswerPayload {
-  problemId: string;
-  answer: string;
-}
 
 const submitAnswer = async (
   userId: string,
   assessmentId: string,
   payload: ISubmitAnswerPayload,
 ) => {
-  // --------------------------------
   // 1. Find assessment
-  // --------------------------------
-
   const assessment = await prisma.assessment.findUnique({
-    where: {
-      id: assessmentId,
-    },
+    where: { id: assessmentId },
     select: {
       id: true,
-      title: true,
       accessType: true,
-      price: true,
       status: true,
     },
   });
@@ -41,10 +32,7 @@ const submitAnswer = async (
     );
   }
 
-  // --------------------------------
   // 2. Check assessment status
-  // --------------------------------
-
   if (
     assessment.status !== "PUBLISHED" &&
     assessment.status !== "ONGOING"
@@ -55,41 +43,28 @@ const submitAnswer = async (
     );
   }
 
-  // --------------------------------
-  // 3. Check payment for PAID assessment
-  // --------------------------------
-
-  if (
-    assessment.accessType === AssessmentAccessType.PAID
-  ) {
+  // 3. Check payment for paid assessments
+  if (assessment.accessType === AssessmentAccessType.PAID) {
     const payment = await prisma.payment.findFirst({
       where: {
         userId,
         assessmentId,
         status: PaymentStatus.PAID,
       },
-      select: {
-        id: true,
-        status: true,
-      },
+      select: { id: true },
     });
 
     if (!payment) {
       throw new AppError(
         httpStatus.PAYMENT_REQUIRED,
-        "This assessment is paid. Please complete the payment before submitting an answer.",
+        "Please complete the assessment payment first.",
       );
     }
   }
 
-  // --------------------------------
   // 4. Find problem
-  // --------------------------------
-
   const problem = await prisma.problem.findUnique({
-    where: {
-      id: payload.problemId,
-    },
+    where: { id: payload.problemId },
     select: {
       id: true,
       assessmentId: true,
@@ -105,10 +80,7 @@ const submitAnswer = async (
     );
   }
 
-  // --------------------------------
-  // 5. Check problem belongs to assessment
-  // --------------------------------
-
+  // 5. Verify problem belongs to assessment
   if (problem.assessmentId !== assessmentId) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
@@ -116,23 +88,54 @@ const submitAnswer = async (
     );
   }
 
-  // --------------------------------
-  // 6. Validate candidate answer
-  // --------------------------------
+  // 6. Identify submission type
+  const isCodeSubmission = typeof payload.code === "string";
 
-  const cleanedAnswer = payload.answer.trim();
+  const submittedAnswer = isCodeSubmission
+    ? payload.code.trim()
+    : payload.answer?.trim();
 
-  if (!cleanedAnswer) {
+  if (!submittedAnswer) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      "Answer cannot be empty",
+      "Answer or code is required",
     );
   }
 
-  // --------------------------------
-  // 7. Find or create Result
-  // --------------------------------
+  if (isCodeSubmission && !payload.language) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Programming language is required",
+    );
+  }
 
+  // 7. Validate submission dates
+  const startedAt = payload.startedAt
+    ? new Date(payload.startedAt)
+    : undefined;
+
+  const submittedAt = payload.submittedAt
+    ? new Date(payload.submittedAt)
+    : new Date();
+
+  if (
+    (startedAt && Number.isNaN(startedAt.getTime())) ||
+    Number.isNaN(submittedAt.getTime())
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Invalid submission date",
+    );
+  }
+
+  if (startedAt && startedAt > submittedAt) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Start time cannot be after submission time",
+    );
+  }
+
+  // 8. Find or create result
   let result = await prisma.result.findUnique({
     where: {
       candidateId_assessmentId: {
@@ -155,20 +158,27 @@ const submitAnswer = async (
     });
   }
 
-  // --------------------------------
-  // 8. Evaluate answer
-  // --------------------------------
+  // 9. Evaluate text answers
+  // Coding submissions need a sandboxed code runner.
+  const isCorrect = isCodeSubmission
+    ? null
+    : submittedAnswer.toLowerCase() ===
+      problem.answer.trim().toLowerCase();
 
-  const isCorrect =
-    cleanedAnswer.toLowerCase() ===
-    problem.answer.trim().toLowerCase();
+  const obtainedMark =
+    isCorrect === true ? problem.marks : 0;
 
-  const obtainedMark = isCorrect ? problem.marks : 0;
+  const submissionType = isCodeSubmission
+    ? "CODING"
+    : "TEXT";
 
-  // --------------------------------
-  // 9. Save / update ResultAnswer
-  // --------------------------------
+  const status = isCodeSubmission
+    ? "SUBMITTED"
+    : isCorrect
+      ? "ACCEPTED"
+      : "WRONG_ANSWER";
 
+  // 10. Save or update the answer
   await prisma.resultAnswer.upsert({
     where: {
       resultId_problemId: {
@@ -176,46 +186,52 @@ const submitAnswer = async (
         problemId: problem.id,
       },
     },
-
     create: {
       resultId: result.id,
       problemId: problem.id,
-      answer: cleanedAnswer,
+      answer: submittedAnswer,
+      language: isCodeSubmission
+        ? payload.language
+        : null,
+      submissionType,
+      status,
+      executionMessage: isCodeSubmission
+        ? "Code submitted. Evaluation is pending."
+        : null,
       obtainedMark,
       isCorrect,
+      startedAt,
+      submittedAt,
     },
-
     update: {
-      answer: cleanedAnswer,
+      answer: submittedAnswer,
+      language: isCodeSubmission
+        ? payload.language
+        : null,
+      submissionType,
+      status,
+      executionMessage: isCodeSubmission
+        ? "Code submitted. Evaluation is pending."
+        : null,
       obtainedMark,
       isCorrect,
+      startedAt,
+      submittedAt,
     },
   });
 
-  // --------------------------------
-  // 10. Calculate result
-  // --------------------------------
-
+  // 11. Calculate total marks
   const resultAnswers = await prisma.resultAnswer.findMany({
-    where: {
-      resultId: result.id,
-    },
-    select: {
-      obtainedMark: true,
-    },
+    where: { resultId: result.id },
+    select: { obtainedMark: true },
   });
 
-  const totalMarks = await prisma.problem.aggregate({
-    where: {
-      assessmentId,
-    },
-    _sum: {
-      marks: true,
-    },
+  const marksAggregate = await prisma.problem.aggregate({
+    where: { assessmentId },
+    _sum: { marks: true },
   });
 
-  const totalAssessmentMarks =
-    totalMarks._sum.marks ?? 0;
+  const totalMarks = marksAggregate._sum.marks ?? 0;
 
   const obtainedMarks = resultAnswers.reduce(
     (total, item) => total + item.obtainedMark,
@@ -223,34 +239,31 @@ const submitAnswer = async (
   );
 
   const percentage =
-    totalAssessmentMarks > 0
-      ? (obtainedMarks / totalAssessmentMarks) * 100
+    totalMarks > 0
+      ? (obtainedMarks / totalMarks) * 100
       : 0;
 
   const passed = percentage >= 40;
 
-  // --------------------------------
-  // 11. Update Result
-  // --------------------------------
-
-  const updatedResult = await prisma.result.update({
-    where: {
-      id: result.id,
-    },
-
+  // 12. Update result
+  return prisma.result.update({
+    where: { id: result.id },
     data: {
-      totalMarks: totalAssessmentMarks,
+      totalMarks,
       obtainedMarks,
       percentage,
       passed,
     },
-
     include: {
       resultAnswers: {
         select: {
           id: true,
           problemId: true,
           answer: true,
+          language: true,
+          submissionType: true,
+          status: true,
+          executionMessage: true,
           obtainedMark: true,
           isCorrect: true,
           createdAt: true,
@@ -259,8 +272,6 @@ const submitAnswer = async (
       },
     },
   });
-
-  return updatedResult;
 };
 
 export const AnswerService = {

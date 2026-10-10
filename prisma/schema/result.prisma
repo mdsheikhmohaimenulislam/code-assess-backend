@@ -21,20 +21,38 @@ model Result {
   @@map("results")
 }
 
+
 model ResultAnswer {
-  id           String   @id @default(uuid())
-  resultId     String
-  problemId    String
-  answer       String
-  obtainedMark Float
-  isCorrect    Boolean?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  problem      Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
-  result       Result   @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  id              String   @id @default(uuid())
+  resultId        String
+  problemId       String
+
+  // Candidate's submitted answer or code
+  answer          String
+
+  // Coding submission details
+  language        String?
+  submissionType  String   @default("TEXT")
+  status          String   @default("SUBMITTED")
+  executionMessage String?
+
+  // Submission timing
+  startedAt       DateTime?
+  submittedAt     DateTime?
+
+  // Evaluation result
+  obtainedMark    Float    @default(0)
+  isCorrect       Boolean?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  problem         Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  result          Result   @relation(fields: [resultId], references: [id], onDelete: Cascade)
 
   @@unique([resultId, problemId])
   @@index([resultId])
   @@index([problemId])
+  @@index([status])
   @@map("result_answers")
 }

@@ -9,7 +9,7 @@ import { createAnswerValidationSchema } from "./answer.validation.js";
 const router = Router();
 
 router.post(
-  "/:assessmentId",
+  "/:AnswerId",
   auth(Role.CANDIDATE),
   validateRequest(createAnswerValidationSchema),
   AnswerController.submitAnswer,

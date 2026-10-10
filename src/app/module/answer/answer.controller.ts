@@ -9,7 +9,7 @@ import { AnswerService } from "./answer.service.js";
 const submitAnswer = catchAsync(
   async (req: Request, res: Response) => {
     const userId = req.user?.userId;
-    const { assessmentId } = req.params;
+    const { answerId } = req.params;
 
     if (!userId) {
       throw new AppError(
@@ -18,16 +18,16 @@ const submitAnswer = catchAsync(
       );
     }
 
-    if (!assessmentId) {
+    if (!answerId) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
-        "Assessment ID is required",
+        "Answer ID is required",
       );
     }
 
     const result = await AnswerService.submitAnswer(
       userId,
-      assessmentId as string,
+      answerId as string,
       req.body,
     );
 
