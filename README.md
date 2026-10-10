@@ -1,701 +1,475 @@
-# Code Assess Backend
+# Code Assess — Developer Assessment Platform
 
-A production-oriented **backend API for an online coding assessment and evaluation platform**, built with **Node.js, TypeScript, Express.js, PostgreSQL, and Prisma ORM**.
+A web-based platform for coding practice, technical assessments, and developer evaluation.
 
-The system provides secure authentication, role-based authorization, coding assessments, problems, test cases, candidate attempts, automated evaluations, results, invitations, payments, email notifications, caching, and administrative functionality through a versioned REST API.
+**Code Assess** is a developer assessment platform designed to help candidates improve their programming skills and participate in technical assessments. It provides companies with tools to manage coding problems and review candidate submissions, while administrators can manage users, companies, and platform resources.
 
----
+The platform aims to make technical assessment workflows more organized, accessible, and efficient for candidates, companies, and administrators.
 
-## 🚀 Features
+## Table of Contents
 
-- 🔐 Secure authentication & authorization
-- 👤 Role-based access control
-- 🔑 JWT-based authentication
-- 🌐 Google OAuth / Social Login
-- 📝 Coding problem management
-- 🧪 Test case management
-- 📋 Assessment creation and management
-- 👨‍💻 Candidate assessment attempts
-- ⚙️ Automated code evaluation workflow
-- 📊 Result and evaluation management
-- 🏢 Company management
-- 📩 Candidate invitation system
-- 💳 Online payment integration
-- 📧 Transactional email notifications
-- ☁️ Cloudinary file/image storage
-- ⚡ Redis caching and temporary state management
-- 🔎 Search, filtering, sorting, and pagination
-- 🗑️ Soft-delete support
-- 📜 Audit/activity tracking
-- 🛡️ Centralized error handling
-- ✅ Server-side validation with Zod
-- 🌍 CORS configuration
-- 📦 RESTful API architecture
-- 📚 Postman API documentation
-- 🚀 Vercel-ready serverless deployment
+- [Overview](#overview)
+- [Project Objectives](#project-objectives)
+- [Key Features](#key-features)
+- [User Roles](#user-roles)
+- [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [Available Scripts](#available-scripts)
+- [Application Routes](#application-routes)
+- [Authentication](#authentication)
+- [API Integration](#api-integration)
+- [Deployment](#deployment)
+- [Security Considerations](#security-considerations)
+- [Future Improvements](#future-improvements)
+- [Author](#author)
+- [License](#license)
 
----
+## Overview
 
-## 🛠️ Technology Stack
+Code Assess brings essential technical assessment activities into one platform. Candidates can explore programming problems and review their submissions, companies can manage their coding-related resources, and administrators can manage users and platform data.
 
-### Runtime & Framework
+The application includes role-specific dashboards and dedicated pages for coding problems, companies, submissions, profiles, and account access.
+
+### Why Code Assess?
+
+Technical assessments are an important part of evaluating programming skills during recruitment and professional development. Managing problems, submissions, users, and assessments separately can make the process complicated.
+
+Code Assess aims to provide a centralized platform where these activities can be managed through a consistent user interface.
+
+## Project Objectives
+
+The main objectives of Code Assess are:
+
+- Provide a centralized platform for coding practice and technical assessments.
+- Help candidates discover coding problems and track their submissions.
+- Allow companies to manage coding problems and related resources.
+- Provide administrators with tools for managing users and platform content.
+- Organize technical assessment workflows through role-based dashboards.
+- Offer a responsive and accessible interface.
+- Integrate authentication and backend APIs for application functionality.
+
+## Key Features
+
+### 1. Authentication and Account Access
+
+- User registration and login pages.
+- Google sign-in integration.
+- Role-based access to application sections.
+- Dedicated profile pages for different user roles.
+
+Authentication features depend on the configured backend and Google OAuth settings.
+
+### 2. Role-Based Dashboards
+
+The platform provides separate dashboard experiences for administrators, companies, and candidates.
+
+Each role has access to relevant sections according to the application's authorization rules.
+
+### 3. Coding Problems
+
+- Browse available coding problems.
+- View individual problem details.
+- Organize problem-related workflows.
+- Provide dedicated problem management pages for authorized users.
+
+### 4. Problem Management
+
+Authorized users can access problem creation and management pages.
+
+The platform includes separate problem-related routes for administrators and companies. Available operations depend on backend permissions and implementation.
+
+### 5. Submission Management
+
+The platform provides submission-related pages for candidates, companies, and administrators.
+
+These pages are intended to help users access and manage coding submission information according to their roles.
+
+### 6. Company Management
+
+- Browse company information.
+- Access company details.
+- Create and manage company-related information.
+- Edit company details through dedicated pages.
+
+### 7. Payment Pages
+
+The application includes payment-related routes for success, cancellation, and failure states.
+
+Actual payment processing and access control depend on the configured payment provider and backend implementation.
+
+### 8. Help Center and Documentation
+
+The platform includes informational pages to help users understand the application and find answers to common questions.
+
+### 9. Responsive User Interface
+
+The frontend is built with modern web technologies and utility-first styling to support different screen sizes.
+
+## User Roles
+
+| Role | Main Responsibilities |
+|---|---|
+| Admin | Manage users, companies, problems, and submissions |
+| Company | Manage company information, coding problems, and related submissions |
+| Candidate | Explore coding problems, access candidate pages, and review submissions |
+
+Access to individual actions must be enforced by the backend, not only by hiding frontend elements.
+
+## Technology Stack
+
+### Frontend
+
+- **Next.js** — React framework for application routing and rendering.
+- **React** — Component-based user interface development.
+- **TypeScript** — Static typing for improved maintainability.
+- **Tailwind CSS** — Utility-first CSS styling.
+- **shadcn/ui** — Reusable interface components.
+- **Lucide React** — Icons for the application interface.
+
+### Backend
+
+The frontend is designed to communicate with a backend API. The following technologies should be listed here only if they are part of the actual backend repository:
 
 - Node.js
-- TypeScript
 - Express.js
-
-### Database & ORM
-
-- PostgreSQL
+- TypeScript
 - Prisma ORM
+- PostgreSQL
 
-### Authentication & Security
+### Authentication and External Services
 
-- JWT
-- Passport.js
-- Google OAuth 2.0
-- bcrypt / bcryptjs
-- Role-Based Access Control (RBAC)
-- CORS
+- Google OAuth
+- Backend API integration
+- Vercel deployment
 
-### Validation & Code Quality
+### Development Tools
 
-- Zod
-- Biome
-
-### Caching & Performance
-
-- Redis
-- Database indexing
-- Optimized Prisma queries
-- Transaction-based operations
-
-### File & Media Storage
-
-- Multer
-- Cloudinary
-
-### Email
-
-- Nodemailer
-
-### Payment
-
-- Stripe / bKash / SSLCommerz
-
-### API Documentation & Testing
-
+- Git
+- GitHub
+- npm
+- Visual Studio Code
 - Postman
-- Thunder Client
 
-### Deployment
+## Project Structure
 
-- Vercel
-- Render
-
----
-
-## 🏗️ Project Architecture
+The following structure is a simplified overview of the frontend application.
 
 ```text
-src/
-├── app/
-│   ├── config/
-│   ├── lib/
-│   ├── middlewares/
-│   ├── module/
-│   │   ├── auth/
-│   │   ├── user/
-│   │   ├── problems/
-│   │   ├── assessment/
-│   │   ├── company/
-│   │   ├── AssessmentProblem/
-│   │   ├── invitation/
+Dev-Assess/
+├── public/
+│   └── images/
+├── src/
+│   ├── app/
+│   │   ├── admin/
+│   │   │   ├── company/
+│   │   │   ├── createProblems/
+│   │   │   ├── dashboard/
+│   │   │   ├── problems/
+│   │   │   ├── profile/
+│   │   │   ├── submissions/
+│   │   │   └── users/
 │   │   ├── candidate/
-│   │   ├── attempt/
-│   │   ├── testCase/
-│   │   ├── MCQOption/
-│   │   ├── answer/
-│   │   ├── evaluation/
-│   │   ├── result/
-│   │   └── payments/
-│   └── utils/
-│
-├── app.ts
-└── server.ts
-
-prisma/
-├── schema.prisma
-└── migrations/
-
-prisma.config.ts
-package.json
-tsconfig.json
-vercel.json
-
-
-## 👥 User Roles
-
-The application implements three primary roles with role-based authorization.
-
-| Role | Responsibilities |
-|------|------------------|
-| **Admin** | Manage users, assessments, companies, problems, system operations, and administrative activities |
-| **Company** | Create and manage assessments, invite candidates, manage coding challenges, and handle hiring workflows |
-| **Candidate** | Participate in assessments, submit answers/code, manage attempts, and view assessment results |
-
-## 🔐 Demo Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| 🛡️ **Admin** | `loi@gmail.com` | `Loi123456@` |
-| 🏢 **Company** | `company@gmail.com` | `Loi123456@` |
-| 👨‍💻 **Candidate** | `user1@gmail.com` | `Loi123456@` |
-
-## 🔐 Authentication & Authorization
-
-The authentication system supports:
-
-- User registration
-- User login
-- JWT access tokens
-- Refresh token management
-- Logout
-- Secure password hashing
-- Google OAuth 2.0
-- Protected routes
-- Role-based authorization
-- Bearer token authentication
-
-Protected APIs use:
-
-```http
-Authorization: Bearer <access_token>
-
-
-## 📡 API Versioning
-
-All APIs follow versioned RESTful routing:
-
-```text
-/api/v1/
-/api/v1/auth
-/api/v1/users
-/api/v1/problem
-/api/v1/assessment
-/api/v1/company
-/api/v1/candidate
-/api/v1/attempts
-/api/v1/evaluations
-/api/v1/payment
-``
-
-# 📚 API Modules
-### 🔐 Authentication
-
-```
-/api/v1/auth
-```
----
-
-## Provides:
-
-- Registration
-- Token management
-- Logout
-- Google authentication
-- Authentication-related operations
-
-
----
-
-## Users
-
-```
-/api/v1/users
-```
-## Provides:
-
-- User profile management
-- User information
-- Account management
-- Role-based user operations
-
-## 🧩 Problems
-
-```
-/api/v1/problem
-```
-## Provides:
-
-- Create coding problems
-- Retrieve coding problems
-- Update problems
-- Problem management
-- Search
-- Filtering
-- Sorting
-- Pagination
-
-
-## 📝 Assessments
-
-```
-/api/v1/assessment
-```
-## Provides:
-- Assessment creation
-- Assessment management
-- Assessment configuration
-- Candidate assessment workflows
-
-## 🏢 Companies
-
-```
-/api/v1/company
-```
-## Provides:
-- Company management
-- Company information
-- Company-related assessment operations
-
-## 🔗 Assessment Problems
-
-```
-/api/v1/assessment-problem
-```
-## Provides:
-- Assign problems to assessments
-- Manage assessment-problem relationships
-- Assessment problem configuration
-
-## 📩 Invitations
-
-```
-/api/v1/invitations
-```
-## Provides:
-- Candidate invitations
-- Invitation management
-- Assessment invitation workflows
-
-## 👨‍💻 Candidates
-
-```
-/api/v1/candidate
-```
-## Provides:
-- Candidate management
-- Candidate assessment information
-- Candidate-related operations
-
-## ⏱️ Attempts
-```
-/api/v1/attempts
-```
-## Provides:
-- Start assessment attempts
-- Manage candidate attempts
-- Track assessment progress
-- Handle attempt-related operations
-
-## 🧪 Test Cases
-
-```
-/api/v1/test-cases
-```
-## Provides:
-- Create test cases
-- Manage test cases
-- Manage evaluation inputsn
-
-## 💻 Answers
-
-```
-/api/v1/answer
+│   │   │   ├── dashboard/
+│   │   │   ├── problems/
+│   │   │   ├── profile/
+│   │   │   └── submissions/
+│   │   ├── company/
+│   │   │   ├── createCompany/
+│   │   │   ├── createProblem/
+│   │   │   ├── dashboard/
+│   │   │   ├── myCompany/
+│   │   │   ├── problems/
+│   │   │   ├── profile/
+│   │   │   └── submissions/
+│   │   ├── companies/
+│   │   ├── faq/
+│   │   ├── help-center/
+│   │   ├── login/
+│   │   ├── payment/
+│   │   ├── problems/
+│   │   ├── register/
+│   │   ├── about/
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── components/
+│   │   ├── layouts/
+│   │   ├── types/
+│   │   └── ui/
+│   └── providers/
+├── .env.local
+├── components.json
+├── next.config.ts
+├── package.json
+├── package-lock.json
+├── tsconfig.json
+└── README.md
 ```
 
-## Provides:
-- Candidate answers
-- Code submissions
-- Answer management
+This is an illustrative structure; consult the repository for the exact current file organization.
 
-## ⚙️ Evaluations
+## Getting Started
 
-```
-/api/v1/evaluations
-```
-## Provides:
-- Submission evaluation
-- Evaluation results
-- Coding assessment evaluation workflow
+Follow these steps to run the frontend locally.
 
-## 📊 Results
+### Prerequisites
 
-```
-/api/v1/result/attempts
-```
-## Provides:
-- Assessment results
-- Candidate performance
-- Attempt results
+Install the following tools before starting:
 
-## 💳 Payments
-```
-/api/v1/payment
-```
-## Provides:
-- Payment initialization
-- Payment verification
-- Payment callbacks
-- Payment status tracking
+- Node.js
+- npm
+- Git
 
+A running backend API is also required for features that retrieve or modify application data.
 
-
-
-## 📊 API Capabilities
-The backend follows modern RESTful API practices and supports:
-
-- ✅ Authentication
-- ✅ Authorization
-- ✅ Validation
-- ✅ Pagination
-- ✅ Filtering
-- ✅ Sorting
-- ✅ Searching
-- ✅ Soft deletion
-- ✅ Audit/activity tracking
-- ✅ Database transactions
-- ✅ Consistent response structure
-
-### Pagination Example
-```
-GET /api/v1/problem?page=1&limit=10
-```
-
-### Filtering Example
-```
-GET /api/v1/problem?status=active
-```
-### Sorting Example
-```
-GET /api/v1/problem?sortBy=createdAt
-```
-### API Docs
-```
-https://documenter.getpostman.com/view/43872417/2sBYAxQ9fH
-```
-## 📦 Standard API Response
-### Success Response
-
-```ts
-{
-  "success": true,
-  "message": "Operation successful",
-  "data": {}
-}
-```
-### Error Response
-```ts
-{
-  "success": false,
-  "message": "Something went wrong",
-  "errors": []
-}
-```
-## 🗄️ Database
-The project uses PostgreSQL as the primary relational database with Prisma ORM.
-
-#### Key database practices include:
-- Relational data modeling
-- Foreign key relationships
-- Database indexing
-- Optimized Prisma queries
-- Database transactions
-- Data integrity constraints
-- Efficient relation queries
-- Soft-delete support
-
-## ⚡ Redis
-Redis is used for caching and temporary state management.
-### Use cases include:
-- API caching
-- Frequently accessed data
-- Temporary assessment state
-- Session-related data
-- Performance optimization
-
-## 🛡️ Security
-
-Security is an important part of the application architecture.
-
-### Security practices include:
-- Secure password hashing
-- JWT authentication
-- Bearer token authorization
-- Role-based access control
-- Server-side input validation
-- CORS configuration
-- Protected private routes
-- Centralized error handling
-- Environment variable based secrets
-- Secure OAuth configuration
-
-Database transactions
-Never commit `.env`, OAuth credentials, database credentials, API keys, or payment secrets to the repository.
-
-## 💳 Payment Integration
-
-The application supports online payment processing through a supported payment gateway.
-
-### Payment workflow:
-
-```ts
-Create Payment
-      ↓
-Payment Gateway
-      ↓
-Success / Cancellation
-      ↓
-Payment Verification
-      ↓
-Update Payment Status
-```
-Payment credentials are stored securely using environment variables.
-
-## 📧 Email Notifications
-
-Nodemailer is used for transactional email communication.
-
-### Examples include:
-- Candidate invitations
-- Authentication-related emails
-- Assessment notifications
-- Payment notifications
-- System notifications
-
-## ☁️ File Upload & Cloudinary
-
-The backend supports file and image uploads using:
-
-- Multer
-- Cloudinary
-
-### Upload workflow:
-```ts
-Client
-  ↓
-Multer
-  ↓
-Backend Validation
-  ↓
-Cloudinary
-  ↓
-Stored File URL
-  ↓
-PostgreSQL
-```
-## 🧪 Validation
-
-Request validation is implemented using Zod.
-
-## Validation can be applied to:
-
-- Request bodies
-- Query parameters
-- Route parameters
-- Authentication inputs
-- Business operations
-
-Invalid requests return structured error responses.
-
-## ⚙️ Installation & Setup
 ### 1. Clone the Repository
-```bash
-git clone https://github.com/mdsheikhmohaimenulislam/code-assess-backend.git
 
-cd code-assess-backend
+```bash
+git clone https://github.com/mdsheikhmohaimenulislam/Dev-Assess
 ```
-### 2. Install Dependencies
+
+### 2. Navigate to the Project Directory
+
+```bash
+cd Dev-Assess
+```
+
+Use the actual cloned directory name if it differs.
+
+### 3. Install Dependencies
+
 ```bash
 npm install
 ```
-### 3. Configure Environment Variables
 
-Create a `.env `file:
-```bash
-NODE_ENV= Add_Data.
-PORT= Add_Data.
+### 4. Configure Environment Variables
 
-DATABASE_URL= Add_Data.
+Create a `.env.local` file in the project root.
 
-JWT_SECRET= Add_Data.
-JWT_REFRESH_SECRET= Add_Data.
-
-GOOGLE_CLIENT_ID= Add_Data.
-GOOGLE_CLIENT_SECRET= Add_Data.
-
-REDIS_URL= Add_Data.
-
-CLOUDINARY_CLOUD_NAME= Add_Data.
-CLOUDINARY_API_KEY= Add_Data.
-CLOUDINARY_API_SECRET= Add_Data.
-
-SMTP_HOST= Add_Data.
-SMTP_PORT= Add_Data.
-SMTP_USER= Add_Data.
-SMTP_PASS= Add_Data.
-
-PAYMENT_SECRET_KEY= Add_Data.
-PAYMENT_WEBHOOK_SECRET= Add_Data.
-```
-Environment variable names should match the configuration used by the application.
-
-## 🗃️ Prisma Setup
-
-#### Generate Prisma Client:
-```bash
-npx prisma generate
-```
-####  Run database migrations:
-
-```bash
-npx prisma migrate dev
-```
-#### For production:
-```bash
-npx prisma migrate deploy
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api/v1
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
 ```
 
-## ▶️ Running the Project
-#### Development
+Update these values to match your local backend and Google OAuth configuration.
+
+### 5. Start the Development Server
 
 ```bash
 npm run dev
 ```
-#### Production Build
+
+Open the following address in your browser:
+
+http://localhost:3000
+
+### 6. Create a Production Build
+
 ```bash
 npm run build
 ```
-#### Start Production Server
-```bash
-npm start
-```
-## 🧹 Code Quality
-#### Format Code
+
+### 7. Run the Production Build Locally
 
 ```bash
-npm run format:fix
+npm run start
 ```
-#### Check Formatting
+
+Run `npm run build` successfully before using the production start command.
+
+## Environment Variables
+
+| Variable | Description | Example |
+|---|---|---|
+| `NEXT_PUBLIC_API_BASE_URL` | Base URL of the backend API | `http://localhost:5000/api/v1` |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth client identifier | `your-google-client-id` |
+
+### Important Environment Notes
+
+- Use your deployed backend URL for production.
+- Do not use `localhost` as the production API URL.
+- Add environment variables to the appropriate Vercel environments.
+- Rebuild and redeploy after changing environment variables used by the frontend.
+- Never commit `.env.local` to the repository.
+- Never expose private credentials or API secrets in client-side variables.
+
+Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser bundle. Only put values there that are safe to make public.
+
+## Available Scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start the local development server |
+| `npm run build` | Compile and validate the production build |
+| `npm run start` | Start the production server |
+| `npm run lint` | Run lint checks, if configured in `package.json` |
+
+The availability and behavior of scripts depend on the current `package.json`.
+
+## Application Routes
+
+The application includes the following main routes.
+
+### Public Pages
+
+| Route | Purpose |
+|---|---|
+| `/` | Home page |
+| `/about` | About the platform |
+| `/companies` | Browse companies |
+| `/problems` | Browse coding problems |
+| `/problems/[id]` | View problem details |
+| `/faq` | Frequently asked questions |
+| `/help-center` | Help and support information |
+| `/login` | Sign in |
+| `/register` | Create an account |
+
+### Admin Pages
+
+| Route | Purpose |
+|---|---|
+| `/admin/dashboard` | Admin dashboard |
+| `/admin/users` | User management |
+| `/admin/company` | Company management |
+| `/admin/createProblems` | Create problems |
+| `/admin/problems` | Manage problems |
+| `/admin/submissions` | Manage submissions |
+| `/admin/profile` | Admin profile |
+
+### Company Pages
+
+| Route | Purpose |
+|---|---|
+| `/company/dashboard` | Company dashboard |
+| `/company/myCompany` | Company information |
+| `/company/createCompany` | Create company information |
+| `/company/createProblem` | Create a problem |
+| `/company/problems` | Manage company problems |
+| `/company/submissions` | View submissions |
+| `/company/profile` | Company profile |
+
+### Candidate Pages
+
+| Route | Purpose |
+|---|---|
+| `/candidate/dashboard` | Candidate dashboard |
+| `/candidate/problems` | Coding problems |
+| `/candidate/submissions` | Candidate submissions |
+| `/candidate/profile` | Candidate profile |
+
+Additional dynamic routes are available for individual records and details.
+
+## Authentication
+
+The frontend includes login, registration, and Google sign-in functionality.
+
+To configure Google sign-in:
+
+1. Create or select a project in Google Cloud Console.
+2. Configure the OAuth consent screen.
+3. Create an OAuth Client ID for a web application.
+4. Add the appropriate authorized JavaScript origins.
+5. Set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` in your environment.
+6. Configure the deployed frontend domain when using production.
+
+Authentication and role authorization should be validated by the backend. Client-side navigation or UI restrictions alone are not sufficient security controls.
+
+## API Integration
+
+The frontend uses a configurable base URL to communicate with the backend API.
+
+Example:
+
+```text
+Local API:
+http://localhost:5000/api/v1
+
+Production API:
+https://your-backend-domain.com/api/v1
+```
+
+Replace the production example with the actual deployed backend URL.
+
+The frontend requires the backend to be available for operations such as authentication, retrieving problems, loading company information, and accessing submissions.
+
+### Backend Configuration Checklist
+
+- Confirm that the backend is deployed and accessible.
+- Configure the correct API base URL.
+- Allow the frontend domain in the backend's CORS configuration.
+- Verify authentication and cookie settings if cookies are used.
+- Check API responses and browser network errors when troubleshooting.
+
+## Deployment
+
+The frontend can be deployed using Vercel.
+
+### Deployment Steps
+
+1. Push the frontend repository to GitHub.
+2. Import the repository into Vercel, or link the existing project using the Vercel CLI.
+3. Configure the correct project root directory.
+4. Add the required environment variables.
+5. Verify the production API URL.
+6. Configure Google OAuth for the deployed domain.
+7. Deploy the application.
+8. Test the deployed pages and authentication flow.
+
+### Deploy Using Vercel CLI
+
+Install the Vercel CLI if necessary, then run:
+
 ```bash
-npm run format:check
+vercel
 ```
-#### Fix Lint Issues
+
+For a production deployment:
+
 ```bash
-npm run lint:fix
+vercel --prod
 ```
 
-## 📮 API Testing
+If automatic Git deployments are disabled, run a new deployment after pushing changes.
 
-#### The API can be tested using:
+## Security Considerations
 
-- Postman
-- Thunder Client
+- Keep private backend credentials on the server.
+- Do not commit environment files containing secrets.
+- Validate and authorize protected operations on the backend.
+- Validate user input on both the client and server.
+- Use HTTPS for deployed applications.
+- Configure CORS for trusted frontend origins.
+- Do not trust role information supplied only by the client.
+- Ensure payment status is verified by the backend before granting paid access.
 
-#### Recommended workflow:
-```ts
-Authentication
-      ↓
-Get Access Token
-      ↓
-Authorize Protected APIs
-      ↓
-Create Resources
-      ↓
-Perform Business Operations
-      ↓
-Submit Assessment
-      ↓
-Evaluate Submission
-      ↓
-View Results
-```
+## Future Improvements
 
-## 🚀 Deployment
+Potential improvements for future versions include:
 
-The backend is designed to support serverless deployment using Vercel and can also be deployed using Render.
+- Online code execution with automated test cases.
+- More programming language support.
+- Assessment scheduling and invitation management.
+- Candidate performance analytics.
+- Detailed submission history and reporting.
+- Notifications for assessment updates.
+- Advanced problem search and filtering.
+- Improved accessibility and user experience.
+- Expanded assessment and payment reporting.
 
-#### Before production deployment, configure:
-- PostgreSQL production database
-- Redis
-- JWT secrets
-- Google OAuth credentials
-- Cloudinary credentials
-- Email credentials
-- Payment gateway credentials
-- Production CORS origin
-- OAuth redirect URLs
+These are proposed improvements and may not be implemented in the current version.
 
- Production secrets should always be configured through the deployment platform's environment variable system.
+## Author
 
-## 🌍 Production API
-```bash
-https://code-assess-backend.vercel.app
-```
-### API Base URL:
-```bash
-https://code-assess-backend.vercel.app/api/v1
-```
+**Mohaimenul Islam**
 
-## 📈 Future Improvements
-- Real-time code execution
-- Advanced code sandboxing
-- More programming language support
-- Detailed candidate analytics
-- Advanced assessment analytics
-- AI-assisted evaluation
-- Real-time assessment monitoring
-- Enhanced audit logging
-- API rate limiting
-- Automated CI/CD pipelines
+- GitHub: [@mdsheikhmohaimenulislam](https://github.com/mdsheikhmohaimenulislam)
+- Portfolio: [mohaimenulislam.vercel.app](https://mohaimenulislam.vercel.app)
 
-## 🎯 Project Goals
+## License
 
-The primary goal of this project is to build a scalable and secure backend platform that enables companies to create coding assessments, invite candidates, evaluate submissions, and manage assessment results through a well-structured REST API.
+No license has been specified in this README. Add a `LICENSE` file if you intend to distribute this project under a particular open-source license.
 
-#### The project focuses on:
-- Clean architecture
-- Type safety
-- Security
-- Scalability
-- Performance
-- Maintainability
-- Real-world business logic
-- Production-ready API design
+---
 
-## 👨‍💻 Developer
-#### Mohaimenul Islam
-#### Backend / Full-Stack Developer
-
-#### Technologies
-```ts
-TypeScript
-Node.js
-Express.js
-PostgreSQL
-Prisma
-Redis
-React.js
-Next.js
-REST APIs
-PASSPORT.JS
-```
-
-## ⭐ Support
-
-#### If you find this project useful, consider giving the repository a ⭐ on GitHub.
-
-
-
-
+**Code Assess — Making developer assessment workflows more organized.**
