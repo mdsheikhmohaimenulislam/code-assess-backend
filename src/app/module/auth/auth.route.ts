@@ -55,9 +55,6 @@ router.post(
 
 router.post("/google", AuthController.googleLogin);
 
-
-
-
 // router.post(
 //   "/google",
 
@@ -76,7 +73,6 @@ router.post("/google", AuthController.googleLogin);
 
 //   AuthController.googleLogin,
 // );
-
 
 // router.post("/google", AuthController.googleLogin);
 

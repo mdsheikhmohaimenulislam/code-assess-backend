@@ -34,7 +34,10 @@ const app: Application = express();
 app.use(
   cors({
     origin: config.frontend_url,
+
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 

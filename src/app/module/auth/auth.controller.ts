@@ -53,55 +53,6 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const loginUser = catchAsync(async (req: Request, res: Response) => {
-  const payload = req.body;
-  const result = await AuthService.loginUser(payload);
-  const { accessToken, refreshToken } = result;
-
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: config.node_env === "development" ? false : true,
-    sameSite: config.node_env === "development" ? "lax" : "none",
-    maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
-  });
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: config.node_env === "development" ? false : true,
-    sameSite: config.node_env === "development" ? "lax" : "none",
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-  });
-
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "User logged in successfully",
-    data: {
-      accessToken,
-      refreshToken,
-    },
-  });
-});
-
-const getMe = catchAsync(async (req: Request, res: Response) => {
-  const user = req.user as IRequestUser;
-
-  if (!user) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "User information is missing in the request",
-    );
-  }
-
-  const result = await AuthService.getMe(user);
-
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "User profile fetched successfully",
-    data: result,
-  });
-});
-
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
   if (!req.cookies.refreshToken) {
     throw new AppError(httpStatus.BAD_REQUEST, "Refresh token is missing");
@@ -159,9 +110,6 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
-
-
 const googleLogin = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.googleLogin(req.body);
 
@@ -194,11 +142,25 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMe = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user as IRequestUser | undefined;
 
+  if (!user?.userId) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      "You are not logged in. Please log in to access this resource.",
+    );
+  }
 
+  const result = await AuthService.getMe(user);
 
-
-
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User profile fetched successfully",
+    data: result,
+  });
+});
 
 // const googleLogin = catchAsync(async (req: Request, res: Response) => {
 //   const result = await AuthService.googleLogin(req.body);
@@ -234,10 +196,47 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
 //   });
 // });
 
+// Common cookie options for login and logout
+
+const loginUser = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body;
+  const result = await AuthService.loginUser(payload);
+
+  const { accessToken, refreshToken } = result;
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none" as const,
+  };
+
+  res.cookie("accessToken", accessToken, {
+    ...cookieOptions,
+    maxAge: 1000 * 60 * 60 * 24,
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    ...cookieOptions,
+    maxAge: 1000 * 60 * 60 * 24 * 7,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User logged in successfully",
+    data: null,
+  });
+});
 
 const logout = catchAsync(async (req: Request, res: Response) => {
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none" as const,
+  };
+
+  res.clearCookie("accessToken", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -256,5 +255,5 @@ export const AuthController = {
   googleLogin,
   forgotPassword,
   resetPassword,
-  logout
+  logout,
 };
